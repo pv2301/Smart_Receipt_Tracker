@@ -157,7 +157,7 @@ class _DashboardContent extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Recibos Recentes',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                      style: TextStyle(fontSize: AppTheme.fontXL, fontWeight: FontWeight.w600)),
                   TextButton(
                     onPressed: () => context.go('/history'),
                     child: const Text('Ver tudo',
@@ -214,13 +214,13 @@ class _TotalCard extends StatelessWidget {
           children: [
             Text(
               'Gastos em ${monthName[0].toUpperCase()}${monthName.substring(1)}',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: AppTheme.fontMD),
             ),
             const SizedBox(height: 8),
             Text(
               formatter.format(total),
               style: const TextStyle(
-                fontSize: 38,
+                fontSize: AppTheme.font3XL,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primaryAction,
                 letterSpacing: -1,
@@ -256,9 +256,9 @@ class _StatChip extends StatelessWidget {
               children: [
                 Text(value,
                     style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold)),
+                        fontSize: AppTheme.font2XL, fontWeight: FontWeight.bold)),
                 Text(label,
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: AppTheme.fontSM)),
               ],
             ),
           ],
@@ -297,7 +297,7 @@ class _ReceiptTile extends StatelessWidget {
           ),
           subtitle: Text(
             '${dateFmt.format(receipt.date)} · ${receipt.items.length} itens',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: AppTheme.fontSM),
           ),
           trailing: Text(
             formatter.format(receipt.totalAmount),
@@ -326,13 +326,13 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 16),
             Text(
               'Nenhum recibo ainda',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+              style: const TextStyle(color: AppTheme.textSecondary, fontSize: AppTheme.fontLG),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Toque no botão de câmera para escanear\nm primeira nota fiscal!',
+              'Toque no botão de câmera para escanear\nsua primeira nota fiscal!',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white38, fontSize: 13),
+              style: TextStyle(color: Colors.white38, fontSize: AppTheme.fontSM),
             ),
           ],
         ),
@@ -361,8 +361,8 @@ class _BudgetCard extends ConsumerWidget {
             children: [
               Icon(Icons.info_outline, color: AppTheme.textSecondary, size: 20),
               SizedBox(width: 12),
-              Text('Nenhuma meta de gasto definida para este mês.', 
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              Text('Nenhuma meta de gasto definida para este mês.',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: AppTheme.fontSM)),
             ],
           ),
         ),
@@ -390,8 +390,8 @@ class _BudgetCard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Orçamento Mensal', 
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const Text('Orçamento Mensal',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: AppTheme.fontLG)),
                 IconButton(
                   icon: const Icon(Icons.edit_note_rounded, size: 20, color: AppTheme.primaryAction),
                   onPressed: () => _showEditBudgetDialog(context, ref),
@@ -403,7 +403,7 @@ class _BudgetCard extends ConsumerWidget {
               status.percentUsed >= 100 ? 'Meta Atingida!' : 'Restam ${formatter.format(status.remaining)}',
               style: TextStyle(
                 color: status.percentUsed >= 100 ? Colors.redAccent : AppTheme.textSecondary,
-                fontSize: 12,
+                fontSize: AppTheme.fontSM,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -422,12 +422,12 @@ class _BudgetCard extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Meta: ${formatter.format(status.currentGoal)}',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: AppTheme.fontSM)),
                 Text('${status.percentUsed.toStringAsFixed(1)}%',
                     style: TextStyle(
                       color: progressColor,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: AppTheme.fontMD,
                     )),
               ],
             ),
@@ -460,8 +460,8 @@ class _BudgetCard extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Meta Fixa', style: TextStyle(fontSize: 14)),
-                subtitle: const Text('Repetir nos próximos meses', style: TextStyle(fontSize: 11)),
+                title: const Text('Meta Fixa', style: TextStyle(fontSize: AppTheme.fontMD)),
+                subtitle: const Text('Repetir nos próximos meses', style: TextStyle(fontSize: AppTheme.fontXS)),
                 value: isFixed,
                 onChanged: (v) => setState(() => isFixed = v),
                 activeColor: AppTheme.primaryAction,
@@ -520,11 +520,11 @@ class _ErrorView extends StatelessWidget {
             const Icon(Icons.wifi_off_rounded, size: 56, color: Colors.redAccent),
             const SizedBox(height: 16),
             const Text('Erro ao conectar ao servidor',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: AppTheme.fontLG, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(message,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                style: const TextStyle(color: AppTheme.textSecondary, fontSize: AppTheme.fontSM)),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: onRetry,

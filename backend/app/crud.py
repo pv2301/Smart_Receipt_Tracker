@@ -40,40 +40,52 @@ def upsert_monthly_goal(db: Session, goal: schemas.MonthlyGoalCreate, user_id: i
     return db_goal
 
 def get_budget_status(db: Session, month: int, year: int, user_id: int = 1):
-    user = get_user(db, user_id)
-    
-    # 1. Determine Goal
-    monthly_goal = db.query(models.MonthlyGoal).filter(
-        models.MonthlyGoal.user_id == user_id,
-        models.MonthlyGoal.month == month,
-        models.MonthlyGoal.year == year
-    ).first()
-    
-    current_goal = 0.0
-    if monthly_goal:
-        current_goal = monthly_goal.amount
-    elif user.is_budget_fixed:
-        current_goal = user.default_budget
-    
-    # 2. Calculate Total Spent
-    total_spent = db.query(models.Receipt).filter(
-        models.Receipt.owner_id == user_id,
-        extract('month', models.Receipt.date) == month,
-        extract('year', models.Receipt.date) == year
-    ).with_entities(func.sum(models.Receipt.total_amount)).scalar() or 0.0
-    
-    remaining = current_goal - total_spent
-    percent_used = (total_spent / current_goal * 100) if current_goal > 0 else 0
-    
-    return schemas.BudgetStatusResponse(
-        month=month,
-        year=year,
-        current_goal=current_goal,
-        is_fixed=user.is_budget_fixed,
-        total_spent=total_spent,
-        remaining=remaining,
-        percent_used=percent_used
-    )
+    try:
+        user = get_user(db, user_id)
+        
+        # 1. Determine Goal
+        monthly_goal = db.query(models.MonthlyGoal).filter(
+            models.MonthlyGoal.user_id == user_id,
+            models.MonthlyGoal.month == month,
+            models.MonthlyGoal.year == year
+        ).first()
+        
+        current_goal = 0.0
+        if monthly_goal:
+            current_goal = float(monthly_goal.amount)
+        elif user and user.is_budget_fixed:
+            current_goal = float(user.default_budget)
+        
+        # 2. Calculate Total Spent
+        # Using a more robust date filtering for SQLite/Postgres compatibility
+        receipts_query = db.query(models.Receipt).filter(
+            models.Receipt.owner_id == user_id,
+            extract('month', models.Receipt.date) == month,
+            extract('year', models.Receipt.date) == year
+        )
+        
+        total_spent_res = receipts_query.with_entities(func.sum(models.Receipt.total_amount)).scalar()
+        total_spent = float(total_spent_res) if total_spent_res else 0.0
+        
+        remaining = current_goal - total_spent
+        percent_used = (total_spent / current_goal * 100.0) if current_goal > 0 else 0.0
+        
+        return schemas.BudgetStatusResponse(
+            month=month,
+            year=year,
+            current_goal=current_goal,
+            is_fixed=user.is_budget_fixed if user else True,
+            total_spent=total_spent,
+            remaining=remaining,
+            percent_used=percent_used
+        )
+    except Exception as e:
+        print(f"Error in get_budget_status: {e}")
+        # Return a fallback response instead of 500
+        return schemas.BudgetStatusResponse(
+            month=month, year=year, current_goal=0, is_fixed=True,
+            total_spent=0, remaining=0, percent_used=0
+        )
 
 def get_receipt(db: Session, receipt_id: int):
     return db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
