@@ -1,0 +1,23 @@
+# Python / Backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/app/__pycache__/
+
+# Flutter / Frontend
+frontend/.dart_tool/
+frontend/.flutter-plugins-dependencies
+frontend/.pub-cache/
+frontend/.pub/
+frontend/build/
+frontend/*.iml
+frontend/.idea/
+
+# Database / Local Docker
+# Se você tiver volumes do docker salvos localmente
+pgdata/
+
+# OS related
+.DS_Store
+Thumbs.db
