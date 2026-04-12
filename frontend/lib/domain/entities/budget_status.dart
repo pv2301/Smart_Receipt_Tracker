@@ -4,7 +4,7 @@ part 'budget_status.freezed.dart';
 part 'budget_status.g.dart';
 
 @freezed
-class BudgetStatus with _$BudgetStatus {
+abstract class BudgetStatus with _$BudgetStatus {
   const factory BudgetStatus({
     required int month,
     required int year,
