@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../../domain/entities/receipt.dart';
 import '../../domain/entities/budget_status.dart';
+import '../../data/receipt_repository.dart';
 import '../widgets/category_summary_chart.dart';
 
 class DashboardScreen extends ConsumerWidget {
