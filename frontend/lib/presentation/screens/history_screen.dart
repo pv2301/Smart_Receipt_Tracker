@@ -25,28 +25,33 @@ class HistoryScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: receiptsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryAction),
-        ),
-        error: (err, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.wifi_off_rounded, size: 56, color: Colors.redAccent),
-              const SizedBox(height: 16),
-              Text('Erro: $err',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppTheme.textSecondary)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(receiptsProvider),
-                child: const Text('Tentar novamente'),
-              ),
-            ],
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(receiptsProvider.future),
+        color: AppTheme.primaryAction,
+        backgroundColor: AppTheme.cardColor,
+        child: receiptsAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppTheme.primaryAction),
           ),
+          error: (err, _) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.wifi_off_rounded, size: 56, color: Colors.redAccent),
+                const SizedBox(height: 16),
+                Text('Erro: $err',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.textSecondary)),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.invalidate(receiptsProvider),
+                  child: const Text('Tentar novamente'),
+                ),
+              ],
+            ),
+          ),
+          data: (receipts) => _HistoryList(receipts: receipts),
         ),
-        data: (receipts) => _HistoryList(receipts: receipts),
       ),
     );
   }

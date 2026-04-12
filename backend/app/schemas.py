@@ -1,6 +1,19 @@
-from pydantic import BaseModel
-from typing import List, Optional
 from datetime import datetime
+from enum import Enum
+
+class SuggestionStatus(str, Enum):
+    NORMAL = "Normal"
+    PROXIMO = "Próximo"
+    CRITICO = "Crítico"
+
+class SuggestionResponse(BaseModel):
+    product_name: str
+    category: str
+    avg_interval_days: float
+    last_purchase_date: datetime
+    days_since_last: int
+    predicted_next_date: datetime
+    status: SuggestionStatus
 
 class ReceiptItemBase(BaseModel):
     product_name: str

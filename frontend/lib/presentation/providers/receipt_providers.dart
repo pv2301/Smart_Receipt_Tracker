@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/receipt_repository.dart';
 import '../../domain/entities/receipt.dart';
+import '../../domain/entities/suggestion.dart';
 
 // ---------------------------------------------------------------------------
 // receiptsProvider – async list of all receipts (auto-refreshable)
@@ -8,6 +9,15 @@ import '../../domain/entities/receipt.dart';
 final receiptsProvider = FutureProvider.autoDispose<List<Receipt>>((ref) async {
   final repo = ref.watch(receiptRepositoryProvider);
   return repo.getReceipts();
+});
+
+// ---------------------------------------------------------------------------
+// suggestionsProvider – async list of shopping suggestions
+// ---------------------------------------------------------------------------
+final suggestionsProvider =
+    FutureProvider.autoDispose.family<List<Suggestion>, List<String>?>((ref, categories) async {
+  final repo = ref.watch(receiptRepositoryProvider);
+  return repo.getSuggestions(categories: categories);
 });
 
 // ---------------------------------------------------------------------------

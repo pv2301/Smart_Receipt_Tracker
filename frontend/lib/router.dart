@@ -4,6 +4,7 @@ import 'presentation/screens/scaffold_with_nav.dart';
 import 'presentation/screens/dashboard_screen.dart';
 import 'presentation/screens/scanner_screen.dart';
 import 'presentation/screens/history_screen.dart';
+import 'presentation/screens/shopping_list_screen.dart';
 import 'presentation/screens/receipt_detail_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
@@ -26,6 +27,10 @@ final goRouter = GoRouter(
         GoRoute(
           path: '/history',
           builder: (context, state) => const HistoryScreen(),
+        ),
+        GoRoute(
+          path: '/shopping-list',
+          builder: (context, state) => const ShoppingListScreen(),
         ),
         GoRoute(
           path: '/settings',

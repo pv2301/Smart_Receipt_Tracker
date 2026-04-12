@@ -1,7 +1,12 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../../domain/entities/receipt.dart';
+import '../widgets/category_summary_chart.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -18,20 +23,28 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            tooltip: 'Atualizar',
             onPressed: () => ref.invalidate(receiptsProvider),
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: () {},
           ),
         ],
       ),
-      body: receiptsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.primaryAction),
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(receiptsProvider.future),
+        color: AppTheme.primaryAction,
+        backgroundColor: AppTheme.cardColor,
+        child: receiptsAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppTheme.primaryAction),
+          ),
+          error: (err, _) => _ErrorView(
+            message: err.toString(),
+            onRetry: () => ref.invalidate(receiptsProvider),
+          ),
+          data: (receipts) => _DashboardContent(receipts: receipts),
         ),
-        error: (err, _) => _ErrorView(
-          message: err.toString(),
-          onRetry: () => ref.invalidate(receiptsProvider),
-        ),
-        data: (receipts) => _DashboardContent(receipts: receipts),
       ),
     );
   }
@@ -101,6 +114,13 @@ class _DashboardContent extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 24),
+
+              // ── Spending by Category Chart ──
+              CategorySummaryChart(receipts: receipts)
+                  .animate()
+                  .fadeIn(delay: 350.ms, duration: 600.ms)
+                  .slideY(begin: 0.05, end: 0),
               const SizedBox(height: 32),
 
               // ── Recent receipts header ──

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/receipt.dart';
+import '../domain/entities/suggestion.dart';
 import 'api_client.dart';
 
 /// Abstract interface for the receipt data source.
@@ -8,6 +9,7 @@ abstract class ReceiptRepository {
   Future<List<Receipt>> getReceipts({int skip = 0, int limit = 100});
   Future<Receipt> getReceiptById(int id);
   Future<Receipt> scanReceipt(String qrUrl);
+  Future<List<Suggestion>> getSuggestions({List<String>? categories});
 }
 
 /// Concrete implementation backed by the FastAPI backend.
@@ -39,6 +41,18 @@ class ApiReceiptRepository implements ReceiptRepository {
       queryParameters: {'qr_url': qrUrl},
     );
     return Receipt.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<List<Suggestion>> getSuggestions({List<String>? categories}) async {
+    final response = await _dio.get(
+      '/suggestions',
+      queryParameters: categories != null ? {'categories': categories} : null,
+    );
+    final List<dynamic> data = response.data;
+    return data
+        .map((json) => Suggestion.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 }
 

@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
-from . import models, schemas
+from typing import List, Optional
+from . import models, schemas, crud, suggester_service
 from .database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
@@ -25,6 +25,13 @@ def read_receipt(receipt_id: int, db: Session = Depends(get_db)):
     if db_receipt is None:
         raise HTTPException(status_code=404, detail="Receipt not found")
     return db_receipt
+
+@app.get("/suggestions", response_model=List[schemas.SuggestionResponse])
+def get_shopping_suggestions(categories: Optional[List[str]] = Query(None), db: Session = Depends(get_db)):
+    """
+    Retorna sugestões de compra baseadas na frequência histórica.
+    """
+    return suggester_service.get_suggestions(db, categories=categories)
 
 @app.post("/receipts/scan", response_model=schemas.Receipt)
 def scan_receipt(qr_url: str, db: Session = Depends(get_db)):

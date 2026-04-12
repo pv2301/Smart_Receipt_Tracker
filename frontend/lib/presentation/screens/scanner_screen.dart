@@ -190,8 +190,53 @@ class _ScannerOverlay extends StatelessWidget {
   }
 }
 
-            style: TextStyle(color: color, fontSize: 13),
-            textAlign: TextAlign.center,
+// ---------------------------------------------------------------------------
+// Status banner displayed below the frame
+// ---------------------------------------------------------------------------
+class _StatusBanner extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final Color color;
+  final bool showSpinner;
+
+  const _StatusBanner({
+    required this.icon,
+    required this.message,
+    required this.color,
+    this.showSpinner = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.72),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showSpinner)
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: color,
+              ),
+            )
+          else
+            Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              message,
+              style: TextStyle(color: color, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
@@ -247,12 +292,4 @@ class _CornerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

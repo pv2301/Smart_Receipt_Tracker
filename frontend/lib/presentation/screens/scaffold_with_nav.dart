@@ -10,7 +10,8 @@ class ScaffoldWithNav extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.path;
     if (location.startsWith('/dashboard')) return 0;
     if (location.startsWith('/history')) return 1;
-    if (location.startsWith('/settings')) return 2;
+    if (location.startsWith('/shopping-list')) return 2;
+    if (location.startsWith('/settings')) return 3;
     return 0;
   }
 
@@ -23,6 +24,9 @@ class ScaffoldWithNav extends StatelessWidget {
         context.go('/history');
         break;
       case 2:
+        context.go('/shopping-list');
+        break;
+      case 3:
         context.go('/settings');
         break;
     }
@@ -52,9 +56,10 @@ class ScaffoldWithNav extends StatelessWidget {
               currentIndex: selectedIndex,
               onTap: (idx) => _onItemTapped(idx, context),
               items: const [
-                BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-                BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Histórico'),
-                BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Ajustes'),
+                BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'Dashboard'),
+                BottomNavigationBarItem(icon: Icon(Icons.history_rounded), label: 'Histórico'),
+                BottomNavigationBarItem(icon: Icon(Icons.shopping_basket_rounded), label: 'Lista'),
+                BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'Ajustes'),
               ],
             ),
           );
@@ -83,9 +88,10 @@ class ScaffoldWithNav extends StatelessWidget {
                   ),
                 ),
                 destinations: const [
-                  NavigationRailDestination(icon: Icon(Icons.dashboard), label: Text('Dashboard')),
-                  NavigationRailDestination(icon: Icon(Icons.receipt_long), label: Text('Histórico')),
-                  NavigationRailDestination(icon: Icon(Icons.settings), label: Text('Ajustes')),
+                  NavigationRailDestination(icon: Icon(Icons.dashboard_rounded), label: Text('Dashboard')),
+                  NavigationRailDestination(icon: Icon(Icons.history_rounded), label: Text('Histórico')),
+                  NavigationRailDestination(icon: Icon(Icons.shopping_basket_rounded), label: Text('Lista')),
+                  NavigationRailDestination(icon: Icon(Icons.settings_rounded), label: Text('Ajustes')),
                 ],
               ),
               const VerticalDivider(thickness: 1, width: 1, color: Colors.white12),
