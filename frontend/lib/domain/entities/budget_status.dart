@@ -8,11 +8,11 @@ abstract class BudgetStatus with _$BudgetStatus {
   const factory BudgetStatus({
     required int month,
     required int year,
-    required double currentGoal,
-    required bool isFixed,
-    required double totalSpent,
+    @JsonKey(name: 'current_goal') required double currentGoal,
+    @JsonKey(name: 'is_fixed') required bool isFixed,
+    @JsonKey(name: 'total_spent') required double totalSpent,
     required double remaining,
-    required double percentUsed,
+    @JsonKey(name: 'percent_used') required double percentUsed,
   }) = _BudgetStatus;
 
   factory BudgetStatus.fromJson(Map<String, dynamic> json) =>

@@ -7,11 +7,11 @@ part 'receipt.g.dart';
 abstract class ReceiptItem with _$ReceiptItem {
   const factory ReceiptItem({
     required int id,
-    required String productName,
-    String? productCode,
+    @JsonKey(name: 'product_name') required String productName,
+    @JsonKey(name: 'product_code') String? productCode,
     required double quantity,
-    required double unitPrice,
-    required double totalPrice,
+    @JsonKey(name: 'unit_price') required double unitPrice,
+    @JsonKey(name: 'total_price') required double totalPrice,
     String? category,
   }) = _ReceiptItem;
 
@@ -23,13 +23,13 @@ abstract class ReceiptItem with _$ReceiptItem {
 abstract class Receipt with _$Receipt {
   const factory Receipt({
     required int id,
-    required String storeName,
-    String? merchantId,
+    @JsonKey(name: 'store_name') required String storeName,
+    @JsonKey(name: 'merchant_id') String? merchantId,
     required DateTime date,
-    required double totalAmount,
+    @JsonKey(name: 'total_amount') required double totalAmount,
     double? taxes,
-    String? qrData,
-    String? accessKey,
+    @JsonKey(name: 'qr_data') String? qrData,
+    @JsonKey(name: 'access_key') String? accessKey,
     @Default([]) List<ReceiptItem> items,
   }) = _Receipt;
 

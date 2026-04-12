@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ReceiptItem {
 
- int get id; String get productName; String? get productCode; double get quantity; double get unitPrice; double get totalPrice; String? get category;
+ int get id;@JsonKey(name: 'product_name') String get productName;@JsonKey(name: 'product_code') String? get productCode; double get quantity;@JsonKey(name: 'unit_price') double get unitPrice;@JsonKey(name: 'total_price') double get totalPrice; String? get category;
 /// Create a copy of ReceiptItem
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $ReceiptItemCopyWith<$Res>  {
   factory $ReceiptItemCopyWith(ReceiptItem value, $Res Function(ReceiptItem) _then) = _$ReceiptItemCopyWithImpl;
 @useResult
 $Res call({
- int id, String productName, String? productCode, double quantity, double unitPrice, double totalPrice, String? category
+ int id,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'product_code') String? productCode, double quantity,@JsonKey(name: 'unit_price') double unitPrice,@JsonKey(name: 'total_price') double totalPrice, String? category
 });
 
 
@@ -159,7 +159,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String productName,  String? productCode,  double quantity,  double unitPrice,  double totalPrice,  String? category)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_code')  String? productCode,  double quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice,  String? category)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ReceiptItem() when $default != null:
 return $default(_that.id,_that.productName,_that.productCode,_that.quantity,_that.unitPrice,_that.totalPrice,_that.category);case _:
@@ -180,7 +180,7 @@ return $default(_that.id,_that.productName,_that.productCode,_that.quantity,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String productName,  String? productCode,  double quantity,  double unitPrice,  double totalPrice,  String? category)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_code')  String? productCode,  double quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice,  String? category)  $default,) {final _that = this;
 switch (_that) {
 case _ReceiptItem():
 return $default(_that.id,_that.productName,_that.productCode,_that.quantity,_that.unitPrice,_that.totalPrice,_that.category);case _:
@@ -200,7 +200,7 @@ return $default(_that.id,_that.productName,_that.productCode,_that.quantity,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String productName,  String? productCode,  double quantity,  double unitPrice,  double totalPrice,  String? category)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'product_name')  String productName, @JsonKey(name: 'product_code')  String? productCode,  double quantity, @JsonKey(name: 'unit_price')  double unitPrice, @JsonKey(name: 'total_price')  double totalPrice,  String? category)?  $default,) {final _that = this;
 switch (_that) {
 case _ReceiptItem() when $default != null:
 return $default(_that.id,_that.productName,_that.productCode,_that.quantity,_that.unitPrice,_that.totalPrice,_that.category);case _:
@@ -215,15 +215,15 @@ return $default(_that.id,_that.productName,_that.productCode,_that.quantity,_tha
 @JsonSerializable()
 
 class _ReceiptItem implements ReceiptItem {
-  const _ReceiptItem({required this.id, required this.productName, this.productCode, required this.quantity, required this.unitPrice, required this.totalPrice, this.category});
+  const _ReceiptItem({required this.id, @JsonKey(name: 'product_name') required this.productName, @JsonKey(name: 'product_code') this.productCode, required this.quantity, @JsonKey(name: 'unit_price') required this.unitPrice, @JsonKey(name: 'total_price') required this.totalPrice, this.category});
   factory _ReceiptItem.fromJson(Map<String, dynamic> json) => _$ReceiptItemFromJson(json);
 
 @override final  int id;
-@override final  String productName;
-@override final  String? productCode;
+@override@JsonKey(name: 'product_name') final  String productName;
+@override@JsonKey(name: 'product_code') final  String? productCode;
 @override final  double quantity;
-@override final  double unitPrice;
-@override final  double totalPrice;
+@override@JsonKey(name: 'unit_price') final  double unitPrice;
+@override@JsonKey(name: 'total_price') final  double totalPrice;
 @override final  String? category;
 
 /// Create a copy of ReceiptItem
@@ -259,7 +259,7 @@ abstract mixin class _$ReceiptItemCopyWith<$Res> implements $ReceiptItemCopyWith
   factory _$ReceiptItemCopyWith(_ReceiptItem value, $Res Function(_ReceiptItem) _then) = __$ReceiptItemCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String productName, String? productCode, double quantity, double unitPrice, double totalPrice, String? category
+ int id,@JsonKey(name: 'product_name') String productName,@JsonKey(name: 'product_code') String? productCode, double quantity,@JsonKey(name: 'unit_price') double unitPrice,@JsonKey(name: 'total_price') double totalPrice, String? category
 });
 
 
@@ -296,7 +296,7 @@ as String?,
 /// @nodoc
 mixin _$Receipt {
 
- int get id; String get storeName; String? get merchantId; DateTime get date; double get totalAmount; double? get taxes; String? get qrData; String? get accessKey; List<ReceiptItem> get items;
+ int get id;@JsonKey(name: 'store_name') String get storeName;@JsonKey(name: 'merchant_id') String? get merchantId; DateTime get date;@JsonKey(name: 'total_amount') double get totalAmount; double? get taxes;@JsonKey(name: 'qr_data') String? get qrData;@JsonKey(name: 'access_key') String? get accessKey; List<ReceiptItem> get items;
 /// Create a copy of Receipt
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -329,7 +329,7 @@ abstract mixin class $ReceiptCopyWith<$Res>  {
   factory $ReceiptCopyWith(Receipt value, $Res Function(Receipt) _then) = _$ReceiptCopyWithImpl;
 @useResult
 $Res call({
- int id, String storeName, String? merchantId, DateTime date, double totalAmount, double? taxes, String? qrData, String? accessKey, List<ReceiptItem> items
+ int id,@JsonKey(name: 'store_name') String storeName,@JsonKey(name: 'merchant_id') String? merchantId, DateTime date,@JsonKey(name: 'total_amount') double totalAmount, double? taxes,@JsonKey(name: 'qr_data') String? qrData,@JsonKey(name: 'access_key') String? accessKey, List<ReceiptItem> items
 });
 
 
@@ -442,7 +442,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String storeName,  String? merchantId,  DateTime date,  double totalAmount,  double? taxes,  String? qrData,  String? accessKey,  List<ReceiptItem> items)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Receipt() when $default != null:
 return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.qrData,_that.accessKey,_that.items);case _:
@@ -463,7 +463,7 @@ return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.total
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String storeName,  String? merchantId,  DateTime date,  double totalAmount,  double? taxes,  String? qrData,  String? accessKey,  List<ReceiptItem> items)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)  $default,) {final _that = this;
 switch (_that) {
 case _Receipt():
 return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.qrData,_that.accessKey,_that.items);case _:
@@ -483,7 +483,7 @@ return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.total
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String storeName,  String? merchantId,  DateTime date,  double totalAmount,  double? taxes,  String? qrData,  String? accessKey,  List<ReceiptItem> items)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)?  $default,) {final _that = this;
 switch (_that) {
 case _Receipt() when $default != null:
 return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.qrData,_that.accessKey,_that.items);case _:
@@ -498,17 +498,17 @@ return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.total
 @JsonSerializable()
 
 class _Receipt implements Receipt {
-  const _Receipt({required this.id, required this.storeName, this.merchantId, required this.date, required this.totalAmount, this.taxes, this.qrData, this.accessKey, final  List<ReceiptItem> items = const []}): _items = items;
+  const _Receipt({required this.id, @JsonKey(name: 'store_name') required this.storeName, @JsonKey(name: 'merchant_id') this.merchantId, required this.date, @JsonKey(name: 'total_amount') required this.totalAmount, this.taxes, @JsonKey(name: 'qr_data') this.qrData, @JsonKey(name: 'access_key') this.accessKey, final  List<ReceiptItem> items = const []}): _items = items;
   factory _Receipt.fromJson(Map<String, dynamic> json) => _$ReceiptFromJson(json);
 
 @override final  int id;
-@override final  String storeName;
-@override final  String? merchantId;
+@override@JsonKey(name: 'store_name') final  String storeName;
+@override@JsonKey(name: 'merchant_id') final  String? merchantId;
 @override final  DateTime date;
-@override final  double totalAmount;
+@override@JsonKey(name: 'total_amount') final  double totalAmount;
 @override final  double? taxes;
-@override final  String? qrData;
-@override final  String? accessKey;
+@override@JsonKey(name: 'qr_data') final  String? qrData;
+@override@JsonKey(name: 'access_key') final  String? accessKey;
  final  List<ReceiptItem> _items;
 @override@JsonKey() List<ReceiptItem> get items {
   if (_items is EqualUnmodifiableListView) return _items;
@@ -550,7 +550,7 @@ abstract mixin class _$ReceiptCopyWith<$Res> implements $ReceiptCopyWith<$Res> {
   factory _$ReceiptCopyWith(_Receipt value, $Res Function(_Receipt) _then) = __$ReceiptCopyWithImpl;
 @override @useResult
 $Res call({
- int id, String storeName, String? merchantId, DateTime date, double totalAmount, double? taxes, String? qrData, String? accessKey, List<ReceiptItem> items
+ int id,@JsonKey(name: 'store_name') String storeName,@JsonKey(name: 'merchant_id') String? merchantId, DateTime date,@JsonKey(name: 'total_amount') double totalAmount, double? taxes,@JsonKey(name: 'qr_data') String? qrData,@JsonKey(name: 'access_key') String? accessKey, List<ReceiptItem> items
 });
 
 

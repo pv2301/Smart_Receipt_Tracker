@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Suggestion {
 
- String get productName; String get category; double get avgIntervalDays; DateTime get lastPurchaseDate; int get daysSinceLast; DateTime get predictedNextDate; String get status;
+@JsonKey(name: 'product_name') String get productName; String get category;@JsonKey(name: 'avg_interval_days') double get avgIntervalDays;@JsonKey(name: 'last_purchase_date') DateTime get lastPurchaseDate;@JsonKey(name: 'days_since_last') int get daysSinceLast;@JsonKey(name: 'predicted_next_date') DateTime get predictedNextDate; String get status;
 /// Create a copy of Suggestion
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $SuggestionCopyWith<$Res>  {
   factory $SuggestionCopyWith(Suggestion value, $Res Function(Suggestion) _then) = _$SuggestionCopyWithImpl;
 @useResult
 $Res call({
- String productName, String category, double avgIntervalDays, DateTime lastPurchaseDate, int daysSinceLast, DateTime predictedNextDate, String status
+@JsonKey(name: 'product_name') String productName, String category,@JsonKey(name: 'avg_interval_days') double avgIntervalDays,@JsonKey(name: 'last_purchase_date') DateTime lastPurchaseDate,@JsonKey(name: 'days_since_last') int daysSinceLast,@JsonKey(name: 'predicted_next_date') DateTime predictedNextDate, String status
 });
 
 
@@ -159,7 +159,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String productName,  String category,  double avgIntervalDays,  DateTime lastPurchaseDate,  int daysSinceLast,  DateTime predictedNextDate,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'product_name')  String productName,  String category, @JsonKey(name: 'avg_interval_days')  double avgIntervalDays, @JsonKey(name: 'last_purchase_date')  DateTime lastPurchaseDate, @JsonKey(name: 'days_since_last')  int daysSinceLast, @JsonKey(name: 'predicted_next_date')  DateTime predictedNextDate,  String status)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Suggestion() when $default != null:
 return $default(_that.productName,_that.category,_that.avgIntervalDays,_that.lastPurchaseDate,_that.daysSinceLast,_that.predictedNextDate,_that.status);case _:
@@ -180,7 +180,7 @@ return $default(_that.productName,_that.category,_that.avgIntervalDays,_that.las
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String productName,  String category,  double avgIntervalDays,  DateTime lastPurchaseDate,  int daysSinceLast,  DateTime predictedNextDate,  String status)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'product_name')  String productName,  String category, @JsonKey(name: 'avg_interval_days')  double avgIntervalDays, @JsonKey(name: 'last_purchase_date')  DateTime lastPurchaseDate, @JsonKey(name: 'days_since_last')  int daysSinceLast, @JsonKey(name: 'predicted_next_date')  DateTime predictedNextDate,  String status)  $default,) {final _that = this;
 switch (_that) {
 case _Suggestion():
 return $default(_that.productName,_that.category,_that.avgIntervalDays,_that.lastPurchaseDate,_that.daysSinceLast,_that.predictedNextDate,_that.status);case _:
@@ -200,7 +200,7 @@ return $default(_that.productName,_that.category,_that.avgIntervalDays,_that.las
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String productName,  String category,  double avgIntervalDays,  DateTime lastPurchaseDate,  int daysSinceLast,  DateTime predictedNextDate,  String status)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'product_name')  String productName,  String category, @JsonKey(name: 'avg_interval_days')  double avgIntervalDays, @JsonKey(name: 'last_purchase_date')  DateTime lastPurchaseDate, @JsonKey(name: 'days_since_last')  int daysSinceLast, @JsonKey(name: 'predicted_next_date')  DateTime predictedNextDate,  String status)?  $default,) {final _that = this;
 switch (_that) {
 case _Suggestion() when $default != null:
 return $default(_that.productName,_that.category,_that.avgIntervalDays,_that.lastPurchaseDate,_that.daysSinceLast,_that.predictedNextDate,_that.status);case _:
@@ -215,15 +215,15 @@ return $default(_that.productName,_that.category,_that.avgIntervalDays,_that.las
 @JsonSerializable()
 
 class _Suggestion implements Suggestion {
-  const _Suggestion({required this.productName, required this.category, required this.avgIntervalDays, required this.lastPurchaseDate, required this.daysSinceLast, required this.predictedNextDate, required this.status});
+  const _Suggestion({@JsonKey(name: 'product_name') required this.productName, required this.category, @JsonKey(name: 'avg_interval_days') required this.avgIntervalDays, @JsonKey(name: 'last_purchase_date') required this.lastPurchaseDate, @JsonKey(name: 'days_since_last') required this.daysSinceLast, @JsonKey(name: 'predicted_next_date') required this.predictedNextDate, required this.status});
   factory _Suggestion.fromJson(Map<String, dynamic> json) => _$SuggestionFromJson(json);
 
-@override final  String productName;
+@override@JsonKey(name: 'product_name') final  String productName;
 @override final  String category;
-@override final  double avgIntervalDays;
-@override final  DateTime lastPurchaseDate;
-@override final  int daysSinceLast;
-@override final  DateTime predictedNextDate;
+@override@JsonKey(name: 'avg_interval_days') final  double avgIntervalDays;
+@override@JsonKey(name: 'last_purchase_date') final  DateTime lastPurchaseDate;
+@override@JsonKey(name: 'days_since_last') final  int daysSinceLast;
+@override@JsonKey(name: 'predicted_next_date') final  DateTime predictedNextDate;
 @override final  String status;
 
 /// Create a copy of Suggestion
@@ -259,7 +259,7 @@ abstract mixin class _$SuggestionCopyWith<$Res> implements $SuggestionCopyWith<$
   factory _$SuggestionCopyWith(_Suggestion value, $Res Function(_Suggestion) _then) = __$SuggestionCopyWithImpl;
 @override @useResult
 $Res call({
- String productName, String category, double avgIntervalDays, DateTime lastPurchaseDate, int daysSinceLast, DateTime predictedNextDate, String status
+@JsonKey(name: 'product_name') String productName, String category,@JsonKey(name: 'avg_interval_days') double avgIntervalDays,@JsonKey(name: 'last_purchase_date') DateTime lastPurchaseDate,@JsonKey(name: 'days_since_last') int daysSinceLast,@JsonKey(name: 'predicted_next_date') DateTime predictedNextDate, String status
 });
 
 

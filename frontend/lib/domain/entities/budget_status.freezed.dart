@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BudgetStatus {
 
- int get month; int get year; double get currentGoal; bool get isFixed; double get totalSpent; double get remaining; double get percentUsed;
+ int get month; int get year;@JsonKey(name: 'current_goal') double get currentGoal;@JsonKey(name: 'is_fixed') bool get isFixed;@JsonKey(name: 'total_spent') double get totalSpent; double get remaining;@JsonKey(name: 'percent_used') double get percentUsed;
 /// Create a copy of BudgetStatus
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $BudgetStatusCopyWith<$Res>  {
   factory $BudgetStatusCopyWith(BudgetStatus value, $Res Function(BudgetStatus) _then) = _$BudgetStatusCopyWithImpl;
 @useResult
 $Res call({
- int month, int year, double currentGoal, bool isFixed, double totalSpent, double remaining, double percentUsed
+ int month, int year,@JsonKey(name: 'current_goal') double currentGoal,@JsonKey(name: 'is_fixed') bool isFixed,@JsonKey(name: 'total_spent') double totalSpent, double remaining,@JsonKey(name: 'percent_used') double percentUsed
 });
 
 
@@ -159,7 +159,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int month,  int year,  double currentGoal,  bool isFixed,  double totalSpent,  double remaining,  double percentUsed)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int month,  int year, @JsonKey(name: 'current_goal')  double currentGoal, @JsonKey(name: 'is_fixed')  bool isFixed, @JsonKey(name: 'total_spent')  double totalSpent,  double remaining, @JsonKey(name: 'percent_used')  double percentUsed)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BudgetStatus() when $default != null:
 return $default(_that.month,_that.year,_that.currentGoal,_that.isFixed,_that.totalSpent,_that.remaining,_that.percentUsed);case _:
@@ -180,7 +180,7 @@ return $default(_that.month,_that.year,_that.currentGoal,_that.isFixed,_that.tot
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int month,  int year,  double currentGoal,  bool isFixed,  double totalSpent,  double remaining,  double percentUsed)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int month,  int year, @JsonKey(name: 'current_goal')  double currentGoal, @JsonKey(name: 'is_fixed')  bool isFixed, @JsonKey(name: 'total_spent')  double totalSpent,  double remaining, @JsonKey(name: 'percent_used')  double percentUsed)  $default,) {final _that = this;
 switch (_that) {
 case _BudgetStatus():
 return $default(_that.month,_that.year,_that.currentGoal,_that.isFixed,_that.totalSpent,_that.remaining,_that.percentUsed);case _:
@@ -200,7 +200,7 @@ return $default(_that.month,_that.year,_that.currentGoal,_that.isFixed,_that.tot
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int month,  int year,  double currentGoal,  bool isFixed,  double totalSpent,  double remaining,  double percentUsed)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int month,  int year, @JsonKey(name: 'current_goal')  double currentGoal, @JsonKey(name: 'is_fixed')  bool isFixed, @JsonKey(name: 'total_spent')  double totalSpent,  double remaining, @JsonKey(name: 'percent_used')  double percentUsed)?  $default,) {final _that = this;
 switch (_that) {
 case _BudgetStatus() when $default != null:
 return $default(_that.month,_that.year,_that.currentGoal,_that.isFixed,_that.totalSpent,_that.remaining,_that.percentUsed);case _:
@@ -215,16 +215,16 @@ return $default(_that.month,_that.year,_that.currentGoal,_that.isFixed,_that.tot
 @JsonSerializable()
 
 class _BudgetStatus implements BudgetStatus {
-  const _BudgetStatus({required this.month, required this.year, required this.currentGoal, required this.isFixed, required this.totalSpent, required this.remaining, required this.percentUsed});
+  const _BudgetStatus({required this.month, required this.year, @JsonKey(name: 'current_goal') required this.currentGoal, @JsonKey(name: 'is_fixed') required this.isFixed, @JsonKey(name: 'total_spent') required this.totalSpent, required this.remaining, @JsonKey(name: 'percent_used') required this.percentUsed});
   factory _BudgetStatus.fromJson(Map<String, dynamic> json) => _$BudgetStatusFromJson(json);
 
 @override final  int month;
 @override final  int year;
-@override final  double currentGoal;
-@override final  bool isFixed;
-@override final  double totalSpent;
+@override@JsonKey(name: 'current_goal') final  double currentGoal;
+@override@JsonKey(name: 'is_fixed') final  bool isFixed;
+@override@JsonKey(name: 'total_spent') final  double totalSpent;
 @override final  double remaining;
-@override final  double percentUsed;
+@override@JsonKey(name: 'percent_used') final  double percentUsed;
 
 /// Create a copy of BudgetStatus
 /// with the given fields replaced by the non-null parameter values.
@@ -259,7 +259,7 @@ abstract mixin class _$BudgetStatusCopyWith<$Res> implements $BudgetStatusCopyWi
   factory _$BudgetStatusCopyWith(_BudgetStatus value, $Res Function(_BudgetStatus) _then) = __$BudgetStatusCopyWithImpl;
 @override @useResult
 $Res call({
- int month, int year, double currentGoal, bool isFixed, double totalSpent, double remaining, double percentUsed
+ int month, int year,@JsonKey(name: 'current_goal') double currentGoal,@JsonKey(name: 'is_fixed') bool isFixed,@JsonKey(name: 'total_spent') double totalSpent, double remaining,@JsonKey(name: 'percent_used') double percentUsed
 });
 
 

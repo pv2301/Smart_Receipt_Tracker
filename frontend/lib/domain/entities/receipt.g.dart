@@ -8,34 +8,34 @@ part of 'receipt.dart';
 
 _ReceiptItem _$ReceiptItemFromJson(Map<String, dynamic> json) => _ReceiptItem(
   id: (json['id'] as num).toInt(),
-  productName: json['productName'] as String,
-  productCode: json['productCode'] as String?,
+  productName: json['product_name'] as String,
+  productCode: json['product_code'] as String?,
   quantity: (json['quantity'] as num).toDouble(),
-  unitPrice: (json['unitPrice'] as num).toDouble(),
-  totalPrice: (json['totalPrice'] as num).toDouble(),
+  unitPrice: (json['unit_price'] as num).toDouble(),
+  totalPrice: (json['total_price'] as num).toDouble(),
   category: json['category'] as String?,
 );
 
 Map<String, dynamic> _$ReceiptItemToJson(_ReceiptItem instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'productName': instance.productName,
-      'productCode': instance.productCode,
+      'product_name': instance.productName,
+      'product_code': instance.productCode,
       'quantity': instance.quantity,
-      'unitPrice': instance.unitPrice,
-      'totalPrice': instance.totalPrice,
+      'unit_price': instance.unitPrice,
+      'total_price': instance.totalPrice,
       'category': instance.category,
     };
 
 _Receipt _$ReceiptFromJson(Map<String, dynamic> json) => _Receipt(
   id: (json['id'] as num).toInt(),
-  storeName: json['storeName'] as String,
-  merchantId: json['merchantId'] as String?,
+  storeName: json['store_name'] as String,
+  merchantId: json['merchant_id'] as String?,
   date: DateTime.parse(json['date'] as String),
-  totalAmount: (json['totalAmount'] as num).toDouble(),
+  totalAmount: (json['total_amount'] as num).toDouble(),
   taxes: (json['taxes'] as num?)?.toDouble(),
-  qrData: json['qrData'] as String?,
-  accessKey: json['accessKey'] as String?,
+  qrData: json['qr_data'] as String?,
+  accessKey: json['access_key'] as String?,
   items:
       (json['items'] as List<dynamic>?)
           ?.map((e) => ReceiptItem.fromJson(e as Map<String, dynamic>))
@@ -45,12 +45,12 @@ _Receipt _$ReceiptFromJson(Map<String, dynamic> json) => _Receipt(
 
 Map<String, dynamic> _$ReceiptToJson(_Receipt instance) => <String, dynamic>{
   'id': instance.id,
-  'storeName': instance.storeName,
-  'merchantId': instance.merchantId,
+  'store_name': instance.storeName,
+  'merchant_id': instance.merchantId,
   'date': instance.date.toIso8601String(),
-  'totalAmount': instance.totalAmount,
+  'total_amount': instance.totalAmount,
   'taxes': instance.taxes,
-  'qrData': instance.qrData,
-  'accessKey': instance.accessKey,
+  'qr_data': instance.qrData,
+  'access_key': instance.accessKey,
   'items': instance.items,
 };
