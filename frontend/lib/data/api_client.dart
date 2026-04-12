@@ -1,15 +1,21 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Base URL for the FastAPI backend.
-/// On Android emulator, use 10.0.2.2 to reach the host machine's localhost.
-/// On a real device, use your machine's local IP address.
-const String kBaseUrl = 'http://10.0.2.2:8000';
+/// Detects if running on Web or Android Emulator automatically.
+String get _baseUrl {
+  if (kIsWeb) {
+    return 'http://localhost:8000'; // Standard for Web
+  }
+  // If not web, assume Android Emulator (or you can add more checks for iOS/Real devices)
+  return 'http://10.0.2.2:8000';
+}
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
-      baseUrl: kBaseUrl,
+      baseUrl: _baseUrl,
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 15),
       headers: {'Content-Type': 'application/json'},

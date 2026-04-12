@@ -1,7 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
+import io
 from . import models, schemas, crud, suggester_service, report_service
 from .database import engine, get_db
 from datetime import datetime
@@ -9,6 +11,15 @@ from datetime import datetime
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Smart Receipt Tracker")
+
+# Configure CORS for Flutter Web
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # For production, replace with specific domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
