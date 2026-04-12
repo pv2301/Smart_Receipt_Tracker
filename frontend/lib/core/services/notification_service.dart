@@ -77,8 +77,8 @@ class NotificationService {
       'shopping_alerts_channel',
       'Alertas de Compras',
       channelDescription: 'Notificações para itens em falta ou críticos',
-      importance: Importance.max,
-      priority: Priority.high,
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
       ticker: 'ticker',
       color: const Color(0xFF00E676),
     );
@@ -98,5 +98,52 @@ class NotificationService {
       body,
       platformChannelSpecifics,
     );
+  }
+
+  /// Agenda um lembrete diário discreto
+  Future<void> scheduleDailyReminder({
+    required int id,
+    int hour = 9,
+    int minute = 0,
+  }) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'daily_reminders_channel',
+      'Lembretes Diários',
+      channelDescription: 'Lembrete matinal para conferir a lista de compras',
+      importance: Importance.low,
+      priority: Priority.low,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: false, // Discreto
+      ),
+    );
+
+    await _notificationsPlugin.zonedSchedule(
+      id,
+      'Planeje suas Compras 🛒',
+      'Confira os itens que estão acabando na sua Lista Inteligente.',
+      _nextInstanceOfTime(hour, minute),
+      platformChannelSpecifics,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    tz.TZDateTime scheduledDate =
+        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    if (scheduledDate.isBefore(now)) {
+      scheduledDate = scheduledDate.add(const Duration(days: 1));
+    }
+    return scheduledDate;
   }
 }

@@ -11,6 +11,9 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.init();
   await notificationService.requestPermissions();
+  
+  // Schedule daily reminder at 9:00 AM
+  await notificationService.scheduleDailyReminder(id: 1000);
 
   runApp(
     const ProviderScope(
