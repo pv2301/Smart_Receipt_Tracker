@@ -3,16 +3,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Base URL for the FastAPI backend.
-/// Detects environment: Vercel production, local web dev, or Android emulator.
+/// Detects environment: Vercel production, local network (real device), local dev, or Android emulator.
 String get _baseUrl {
   if (kIsWeb) {
     final host = Uri.base.host;
-    // Production (Vercel or any real domain): use relative /api path
-    if (host != 'localhost' && host != '127.0.0.1') {
-      return '${Uri.base.scheme}://${Uri.base.host}/api';
+    // Local dev on same machine
+    if (host == 'localhost' || host == '127.0.0.1') {
+      return 'http://localhost:8000';
     }
-    // Local web development
-    return 'http://localhost:8000';
+    // Local network IP (e.g. real device on same Wi-Fi, e.g. 192.168.x.x)
+    final isLocalIp = RegExp(r'^(\d{1,3}\.){3}\d{1,3}$').hasMatch(host);
+    if (isLocalIp) {
+      return 'http://$host:8000';
+    }
+    // Production (Vercel/cloud domain): backend served at /api
+    return '${Uri.base.scheme}://${Uri.base.host}/api';
   }
   // Android emulator: 10.0.2.2 routes to host machine
   return 'http://10.0.2.2:8000';

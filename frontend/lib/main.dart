@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/theme.dart';
 import 'router.dart';
 import 'core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Initialize date formatting for pt_BR locale
+  await initializeDateFormatting('pt_BR');
+
   // Initialize notifications
   try {
     final notificationService = NotificationService();
@@ -35,6 +39,7 @@ class MyApp extends StatelessWidget {
       title: 'Smart Receipt Tracker',
       theme: AppTheme.darkTheme,
       routerConfig: goRouter,
+      debugShowCheckedModeBanner: false,
     );
   }
 }
