@@ -5,9 +5,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/build/web",
   "functions": {
-    "api/index.py": {
-      "runtime": "python3.10"
-    }
+    "api/index.py": {}
   },
   "rewrites": [
     {
