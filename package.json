@@ -1,0 +1,9 @@
+{
+  "name": "smart-receipt-tracker",
+  "version": "1.0.0",
+  "description": "Smart Receipt Tracker",
+  "scripts": {
+    "install:flutter": "bash scripts/install-flutter.sh",
+    "build": "bash scripts/build-web.sh"
+  }
+}
