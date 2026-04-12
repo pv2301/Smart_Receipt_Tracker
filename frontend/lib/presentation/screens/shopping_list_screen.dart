@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../widgets/suggestion_card.dart';
+import '../../core/services/notification_service.dart';
 
 class ShoppingListScreen extends ConsumerStatefulWidget {
   const ShoppingListScreen({super.key});
@@ -17,6 +18,22 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for changes in suggestions to trigger notifications
+    ref.listen(suggestionsProvider(_marketCategories), (previous, next) {
+      if (next.hasValue && next.value != null) {
+        final criticalItems = next.value!.where((s) => s.status == 'Crítico').toList();
+        if (criticalItems.isNotEmpty) {
+          NotificationService().showCriticalAlert(
+            id: 100,
+            title: 'Reposição Necessária',
+            body: criticalItems.length == 1 
+                ? 'Sugerimos comprar ${criticalItems.first.productName} em breve.'
+                : 'Você tem ${criticalItems.length} itens essenciais acabando. Confira sua lista!',
+          );
+        }
+      }
+    });
+
     // Busca as sugestões passando as categorias de mercado
     final suggestionsAsync = ref.watch(suggestionsProvider(_marketCategories));
 
