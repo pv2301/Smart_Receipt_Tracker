@@ -11,11 +11,11 @@ else
 fi
 
 # Add to PATH
-export PATH="$PATH:`pwd`/flutter/bin"
+export PATH="$PATH:$(pwd)/flutter/bin"
 
-# Pre-warm
-flutter doctor
+# Pre-warm Flutter for web (flutter doctor fails on CI without Android/Xcode — ignore)
 flutter config --enable-web
+flutter doctor --version 2>/dev/null || true
 
 cd frontend
 flutter pub get
