@@ -4,11 +4,6 @@
   "installCommand": "npm run install:flutter",
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/build/web",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 30
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -20,5 +15,3 @@
     }
   ]
 }
-
-
