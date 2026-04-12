@@ -1,5 +1,7 @@
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+from pydantic import BaseModel
 
 class SuggestionStatus(str, Enum):
     NORMAL = "Normal"
@@ -14,6 +16,34 @@ class SuggestionResponse(BaseModel):
     days_since_last: int
     predicted_next_date: datetime
     status: SuggestionStatus
+
+class MonthlyGoalBase(BaseModel):
+    month: int
+    year: int
+    amount: float
+
+class MonthlyGoalCreate(MonthlyGoalBase):
+    pass
+
+class MonthlyGoal(MonthlyGoalBase):
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
+class UserBudgetUpdate(BaseModel):
+    default_budget: float
+    is_budget_fixed: bool
+
+class BudgetStatusResponse(BaseModel):
+    month: int
+    year: int
+    current_goal: float
+    is_fixed: bool
+    total_spent: float
+    remaining: float
+    percent_used: float
 
 class ReceiptItemBase(BaseModel):
     product_name: str

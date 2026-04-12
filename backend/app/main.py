@@ -1,8 +1,10 @@
 from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from . import models, schemas, crud, suggester_service
+from . import models, schemas, crud, suggester_service, report_service
 from .database import engine, get_db
+from datetime import datetime
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -13,6 +15,57 @@ def read_root():
     return {"message": "Welcome to Smart Receipt Tracker API"}
 
 from . import crud
+
+@app.get("/budget/status", response_model=schemas.BudgetStatusResponse)
+def get_budget_status(
+    month: int = Query(datetime.now().month),
+    year: int = Query(datetime.now().year),
+    db: Session = Depends(get_db)
+):
+    """
+    Retorna o status do orçamento para o mês/ano especificado.
+    """
+    return crud.get_budget_status(db, month=month, year=year)
+
+@app.put("/budget/settings")
+def update_budget_settings(budget_in: schemas.UserBudgetUpdate, db: Session = Depends(get_db)):
+    """
+    Atualiza as configurações globais de orçamento do usuário.
+    """
+    crud.update_user_budget_settings(db, budget_in)
+    return {"status": "success"}
+
+@app.post("/budget/monthly", response_model=schemas.MonthlyGoal)
+def set_monthly_goal(goal: schemas.MonthlyGoalCreate, db: Session = Depends(get_db)):
+    """
+    Define uma meta específica para um mês/ano.
+    """
+    return crud.upsert_monthly_goal(db, goal)
+
+@app.get("/receipts/export")
+def export_receipts(
+    format: str = Query("pdf", regex="^(pdf|excel)$"),
+    month: int = Query(datetime.now().month),
+    year: int = Query(datetime.now().year),
+    db: Session = Depends(get_db)
+):
+    """
+    Gera e retorna um relatório (PDF ou Excel) dos recibos do período.
+    """
+    if format == "pdf":
+        content = report_service.generate_pdf_report(db, month, year)
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=relatorio_{year}_{month}.pdf"}
+        )
+    else:
+        content = report_service.generate_excel_report(db, month, year)
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=gastos_{year}_{month}.xlsx"}
+        )
 
 @app.get("/receipts/", response_model=List[schemas.Receipt])
 def read_receipts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

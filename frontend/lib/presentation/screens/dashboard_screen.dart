@@ -15,6 +15,9 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final receiptsAsync = ref.watch(receiptsProvider);
 
+    final now = DateTime.now();
+    final budgetAsync = ref.watch(budgetStatusProvider((month: now.month, year: now.year)));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Visão Geral', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -23,7 +26,10 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            onPressed: () => ref.invalidate(receiptsProvider),
+            onPressed: () {
+              ref.invalidate(receiptsProvider);
+              ref.invalidate(budgetStatusProvider);
+            },
           ),
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded),
@@ -32,7 +38,10 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(receiptsProvider.future),
+        onRefresh: () async {
+          await ref.refresh(receiptsProvider.future);
+          await ref.refresh(budgetStatusProvider((month: now.month, year: now.year)).future);
+        },
         color: AppTheme.primaryAction,
         backgroundColor: AppTheme.cardColor,
         child: receiptsAsync.when(
@@ -41,9 +50,15 @@ class DashboardScreen extends ConsumerWidget {
           ),
           error: (err, _) => _ErrorView(
             message: err.toString(),
-            onRetry: () => ref.invalidate(receiptsProvider),
+            onRetry: () {
+              ref.invalidate(receiptsProvider);
+              ref.invalidate(budgetStatusProvider);
+            },
           ),
-          data: (receipts) => _DashboardContent(receipts: receipts),
+          data: (receipts) => _DashboardContent(
+            receipts: receipts,
+            budgetAsync: budgetAsync,
+          ),
         ),
       ),
     );
@@ -55,7 +70,8 @@ class DashboardScreen extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 class _DashboardContent extends StatelessWidget {
   final List<Receipt> receipts;
-  const _DashboardContent({required this.receipts});
+  final AsyncValue<BudgetStatus> budgetAsync;
+  const _DashboardContent({required this.receipts, required this.budgetAsync});
 
   double get _totalThisMonth {
     final now = DateTime.now();
@@ -86,6 +102,16 @@ class _DashboardContent extends StatelessWidget {
                   .animate()
                   .fadeIn(duration: 600.ms)
                   .slideY(begin: 0.1, end: 0),
+              const SizedBox(height: 12),
+
+              // ── Budget Progress Card ──
+              budgetAsync.when(
+                loading: () => const SizedBox(height: 80, child: Center(child: LinearProgressIndicator())),
+                error: (_, __) => const SizedBox.shrink(),
+                data: (budget) => _BudgetCard(status: budget, formatter: currencyFmt)
+                    .animate()
+                    .fadeIn(delay: 100.ms, duration: 600.ms),
+              ),
               const SizedBox(height: 24),
 
               // ── Quick stats row ──
@@ -304,6 +330,166 @@ class _EmptyState extends StatelessWidget {
               'Toque no botão de câmera para escanear\nm primeira nota fiscal!',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.white38, fontSize: 13),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Budget Progress Card
+// ---------------------------------------------------------------------------
+class _BudgetCard extends StatelessWidget {
+  final BudgetStatus status;
+  final NumberFormat formatter;
+  const _BudgetCard({required this.status, required this.formatter});
+
+  @override
+  Widget build(BuildContext context) {
+    // If goal is zero, we show a simplified "No budget set" card
+    if (status.currentGoal <= 0) {
+      return Card(
+        color: AppTheme.cardColor.withOpacity(0.3),
+        child: const Padding(
+          padding: EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(Icons.info_outline, color: AppTheme.textSecondary, size: 20),
+              SizedBox(width: 12),
+              Text('Nenhuma meta de gasto definida para este mês.', 
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Determine color based on usage
+    Color progressColor;
+    if (status.percentUsed < 80) {
+      progressColor = AppTheme.primaryAction; // Neon Green
+    } else if (status.percentUsed < 100) {
+      progressColor = Colors.orangeAccent;
+    } else {
+      progressColor = Colors.redAccent; // Neon Red equivalent
+    }
+
+    final double progressValue = (status.percentUsed / 100).clamp(0.0, 1.0);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Orçamento Mensal', 
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                IconButton(
+                  icon: const Icon(Icons.edit_note_rounded, size: 20, color: AppTheme.primaryAction),
+                  onPressed: () => _showEditBudgetDialog(context, ref),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              status.percentUsed >= 100 ? 'Meta Atingida!' : 'Restam ${formatter.format(status.remaining)}',
+              style: TextStyle(
+                color: status.percentUsed >= 100 ? Colors.redAccent : AppTheme.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: progressValue,
+                minHeight: 10,
+                backgroundColor: Colors.white12,
+                color: progressColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Meta: ${formatter.format(status.currentGoal)}',
+                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                Text('${status.percentUsed.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      color: progressColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    )),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditBudgetDialog(BuildContext context, WidgetRef ref) {
+    final controller = TextEditingController(text: status.currentGoal.toString());
+    bool isFixed = status.isFixed;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: AppTheme.cardColor,
+          title: const Text('Configurar Meta'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Valor da Meta (R$)',
+                  prefixText: 'R\$ ',
+                ),
+              ),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Meta Fixa', style: TextStyle(fontSize: 14)),
+                subtitle: const Text('Repetir nos próximos meses', style: TextStyle(fontSize: 11)),
+                value: isFixed,
+                onChanged: (v) => setState(() => isFixed = v),
+                activeColor: AppTheme.primaryAction,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white38)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final amount = double.tryParse(controller.text) ?? 0.0;
+                final repo = ref.read(receiptRepositoryProvider);
+                
+                // If the user wants to set for this specific month
+                if (!isFixed) {
+                  await repo.setMonthlyGoal(status.month, status.year, amount);
+                }
+                
+                // Update global setting
+                await repo.updateBudgetSettings(amount, isFixed);
+                
+                if (context.mounted) {
+                  ref.invalidate(budgetStatusProvider);
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Salvar'),
             ),
           ],
         ),

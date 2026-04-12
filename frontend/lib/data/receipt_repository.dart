@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/receipt.dart';
 import '../domain/entities/suggestion.dart';
+import '../domain/entities/budget_status.dart';
 import 'api_client.dart';
 
 /// Abstract interface for the receipt data source.
@@ -10,6 +12,15 @@ abstract class ReceiptRepository {
   Future<Receipt> getReceiptById(int id);
   Future<Receipt> scanReceipt(String qrUrl);
   Future<List<Suggestion>> getSuggestions({List<String>? categories});
+
+  // Budgeting
+  Future<BudgetStatus> getBudgetStatus({int? month, int? year});
+  Future<void> updateBudgetSettings(double defaultBudget, bool isFixed);
+  Future<void> setMonthlyGoal(int month, int year, double amount);
+
+  // Reporting
+  Future<Uint8List> exportReceipts(
+      {required String format, int? month, int? year});
 }
 
 /// Concrete implementation backed by the FastAPI backend.
@@ -25,7 +36,9 @@ class ApiReceiptRepository implements ReceiptRepository {
       queryParameters: {'skip': skip, 'limit': limit},
     );
     final List<dynamic> data = response.data;
-    return data.map((json) => Receipt.fromJson(json as Map<String, dynamic>)).toList();
+    return data
+        .map((json) => Receipt.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -53,6 +66,56 @@ class ApiReceiptRepository implements ReceiptRepository {
     return data
         .map((json) => Suggestion.fromJson(json as Map<String, dynamic>))
         .toList();
+  }
+
+  @override
+  Future<BudgetStatus> getBudgetStatus({int? month, int? year}) async {
+    final response = await _dio.get(
+      '/budget/status',
+      queryParameters: {
+        if (month != null) 'month': month,
+        if (year != null) 'year': year,
+      },
+    );
+    return BudgetStatus.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  @override
+  Future<void> updateBudgetSettings(double defaultBudget, bool isFixed) async {
+    await _dio.put(
+      '/budget/settings',
+      data: {
+        'default_budget': defaultBudget,
+        'is_budget_fixed': isFixed,
+      },
+    );
+  }
+
+  @override
+  Future<void> setMonthlyGoal(int month, int year, double amount) async {
+    await _dio.post(
+      '/budget/monthly',
+      data: {
+        'month': month,
+        'year': year,
+        'amount': amount,
+      },
+    );
+  }
+
+  @override
+  Future<Uint8List> exportReceipts(
+      {required String format, int? month, int? year}) async {
+    final response = await _dio.get(
+      '/receipts/export',
+      queryParameters: {
+        'format': format,
+        if (month != null) 'month': month,
+        if (year != null) 'year': year,
+      },
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data as List<int>);
   }
 }
 

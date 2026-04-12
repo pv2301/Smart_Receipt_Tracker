@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -8,8 +8,22 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
+    default_budget = Column(Float, default=0.0)
+    is_budget_fixed = Column(Boolean, default=True)
     
     receipts = relationship("Receipt", back_populates="owner")
+    monthly_goals = relationship("MonthlyGoal", back_populates="owner")
+
+class MonthlyGoal(Base):
+    __tablename__ = "monthly_goals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    month = Column(Integer) # 1-12
+    year = Column(Integer)
+    amount = Column(Float)
+
+    owner = relationship("User", back_populates="monthly_goals")
 
 class Receipt(Base):
     __tablename__ = "receipts"

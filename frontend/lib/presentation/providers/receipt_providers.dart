@@ -2,6 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/receipt_repository.dart';
 import '../../domain/entities/receipt.dart';
 import '../../domain/entities/suggestion.dart';
+import '../../domain/entities/budget_status.dart';
+
+// ---------------------------------------------------------------------------
+// budgetStatusProvider – monthly goal progress (auto-refreshable)
+// ---------------------------------------------------------------------------
+final budgetStatusProvider = FutureProvider.autoDispose.family<BudgetStatus, ({int month, int year})>((ref, date) async {
+  final repo = ref.watch(receiptRepositoryProvider);
+  return repo.getBudgetStatus(month: date.month, year: date.year);
+});
 
 // ---------------------------------------------------------------------------
 // receiptsProvider – async list of all receipts (auto-refreshable)

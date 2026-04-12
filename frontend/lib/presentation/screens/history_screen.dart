@@ -1,13 +1,96 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
+import '../../data/receipt_repository.dart';
 import '../../domain/entities/receipt.dart';
+import '../../domain/entities/budget_status.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
+
+  Future<void> _exportData(BuildContext context, WidgetRef ref, String format) async {
+    try {
+      // Show loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gerando relatório...'), duration: Duration(seconds: 2)),
+      );
+
+      final now = DateTime.now();
+      final repo = ref.read(receiptRepositoryProvider);
+      final bytes = await repo.exportReceipts(
+        format: format,
+        month: now.month,
+        year: now.year,
+      );
+
+      // Save to temporary file
+      final tempDir = await getTemporaryDirectory();
+      final fileName = format == 'pdf' 
+          ? 'relatorio_gastos_${now.month}_${now.year}.pdf'
+          : 'gastos_smart_tracker_${now.month}_${now.year}.xlsx';
+      final file = File('${tempDir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+
+      // Share file
+      await Share.shareXFiles([XFile(file.path)], text: 'Meu relatório de gastos - Smart Receipt Tracker');
+      
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao exportar: $e'), backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
+  void _showExportOptions(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Exportar Relatório Mensal', 
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text('Escolha o formato desejado para o mês atual', 
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent),
+                title: const Text('Relatório PDF (com Gráficos)'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportData(context, ref, 'pdf');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.table_chart_rounded, color: Colors.greenAccent),
+                title: const Text('Planilha Excel (Contabilidade)'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _exportData(context, ref, 'excel');
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,6 +102,11 @@ class HistoryScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Exportar Relatórios',
+            onPressed: () => _showExportOptions(context, ref),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () => ref.invalidate(receiptsProvider),
