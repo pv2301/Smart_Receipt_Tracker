@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../../domain/entities/receipt.dart';
+import '../../domain/entities/budget_status.dart';
 import '../widgets/category_summary_chart.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -68,12 +69,12 @@ class DashboardScreen extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 // Content layout when data is available
 // ---------------------------------------------------------------------------
-class _DashboardContent extends StatelessWidget {
+class _DashboardContent extends ConsumerWidget {
   final List<Receipt> receipts;
   final AsyncValue<BudgetStatus> budgetAsync;
   const _DashboardContent({required this.receipts, required this.budgetAsync});
 
-  double get _totalThisMonth {
+  double _totalThisMonth(List<Receipt> receipts) {
     final now = DateTime.now();
     return receipts
         .where((r) => r.date.year == now.year && r.date.month == now.month)
@@ -81,9 +82,10 @@ class _DashboardContent extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currencyFmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     final recentReceipts = receipts.take(5).toList();
+    final total = _totalThisMonth(receipts);
 
     return RefreshIndicator(
       color: AppTheme.primaryAction,
@@ -98,7 +100,7 @@ class _DashboardContent extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Total Card ──
-              _TotalCard(total: _totalThisMonth, formatter: currencyFmt)
+              _TotalCard(total: total, formatter: currencyFmt)
                   .animate()
                   .fadeIn(duration: 600.ms)
                   .slideY(begin: 0.1, end: 0),
@@ -341,13 +343,13 @@ class _EmptyState extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Budget Progress Card
 // ---------------------------------------------------------------------------
-class _BudgetCard extends StatelessWidget {
+class _BudgetCard extends ConsumerWidget {
   final BudgetStatus status;
   final NumberFormat formatter;
   const _BudgetCard({required this.status, required this.formatter});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // If goal is zero, we show a simplified "No budget set" card
     if (status.currentGoal <= 0) {
       return Card(
@@ -451,7 +453,7 @@ class _BudgetCard extends StatelessWidget {
                 controller: controller,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
-                  labelText: 'Valor da Meta (R$)',
+                  labelText: 'Valor da Meta (R\$)',
                   prefixText: 'R\$ ',
                 ),
               ),
