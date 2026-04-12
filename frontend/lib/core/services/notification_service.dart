@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -13,6 +14,8 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   Future<void> init() async {
+    if (kIsWeb) return; // Local notifications skip on web for now
+
     // 1. Initialize Timezone
     tz.initializeTimeZones();
 
@@ -45,6 +48,8 @@ class NotificationService {
 
   /// Pede permissão para notificações (Android 13+ e iOS)
   Future<bool> requestPermissions() async {
+    if (kIsWeb) return true;
+
     if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidPlatformChannelSpecifics =
           _notificationsPlugin.resolvePlatformSpecificImplementation<
@@ -106,6 +111,8 @@ class NotificationService {
     int hour = 9,
     int minute = 0,
   }) async {
+    if (kIsWeb) return;
+
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'daily_reminders_channel',
