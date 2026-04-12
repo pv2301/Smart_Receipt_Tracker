@@ -1,8 +1,22 @@
 {
+  "version": 2,
   "name": "smart-receipt-tracker",
-  "framework": "flutter",
-  "rootDirectory": "frontend",
-  "installCommand": "../flutter_sdk/bin/flutter pub get",
-  "buildCommand": "../flutter_sdk/bin/flutter build web --release",
-  "outputDirectory": "build/web"
+  "installCommand": "bash scripts/install-flutter.sh",
+  "buildCommand": "echo 'Frontend build completed'",
+  "outputDirectory": "frontend/build/web",
+  "functions": {
+    "api/*.py": {
+      "runtime": "@vercel/python"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "api/index.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
