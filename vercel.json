@@ -5,7 +5,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "frontend/build/web",
   "functions": {
-    "api/index.py": {}
+    "api/index.py": {
+      "maxDuration": 30
+    }
   },
   "rewrites": [
     {
