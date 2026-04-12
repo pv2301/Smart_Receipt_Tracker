@@ -2,7 +2,7 @@
   "version": 2,
   "name": "smart-receipt-tracker",
   "installCommand": "bash scripts/install-flutter.sh",
-  "buildCommand": "echo 'Frontend build completed'",
+  "buildCommand": "bash scripts/build-web.sh",
   "outputDirectory": "frontend/build/web",
   "functions": {
     "api/*.py": {
