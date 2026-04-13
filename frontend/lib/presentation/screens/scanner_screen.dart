@@ -13,8 +13,12 @@ class ScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _ScannerScreenState extends ConsumerState<ScannerScreen> {
-  final MobileScannerController _controller = MobileScannerController();
+  late final MobileScannerController _controller = MobileScannerController(
+    facing: CameraFacing.back,
+    torchEnabled: false,
+  );
   bool _hasScanned = false;
+  bool _torchOn = false;
 
   @override
   void dispose() {
@@ -75,9 +79,12 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.flash_on_rounded),
-            onPressed: () => _controller.toggleTorch(),
-            tooltip: 'Flash',
+            icon: Icon(_torchOn ? Icons.flash_on_rounded : Icons.flash_off_rounded),
+            onPressed: () {
+              _controller.toggleTorch();
+              setState(() => _torchOn = !_torchOn);
+            },
+            tooltip: _torchOn ? 'Desligar lanterna' : 'Ligar lanterna',
           ),
         ],
       ),
