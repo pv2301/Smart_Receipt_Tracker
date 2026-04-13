@@ -96,6 +96,12 @@ def read_receipt(receipt_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Receipt not found")
     return db_receipt
 
+@app.delete("/receipts/{receipt_id}", status_code=204)
+def delete_receipt(receipt_id: int, db: Session = Depends(get_db)):
+    deleted = crud.delete_receipt(db, receipt_id=receipt_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Receipt not found")
+
 @app.get("/suggestions", response_model=List[schemas.SuggestionResponse])
 def get_shopping_suggestions(categories: Optional[List[str]] = Query(None), db: Session = Depends(get_db)):
     """

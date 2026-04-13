@@ -9,79 +9,90 @@ import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../../data/receipt_repository.dart';
 import '../../domain/entities/receipt.dart';
-import '../../domain/entities/budget_status.dart';
 
-class HistoryScreen extends ConsumerWidget {
+class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
-  Future<void> _exportData(BuildContext context, WidgetRef ref, String format) async {
-    try {
-      // Show loading indicator
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gerando relatório...'), duration: Duration(seconds: 2)),
-      );
+  @override
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
 
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  String _searchQuery = '';
+  final _searchController = SearchController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _exportData(String format) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Gerando relatório...'),
+            duration: Duration(seconds: 2)),
+      );
       final now = DateTime.now();
       final repo = ref.read(receiptRepositoryProvider);
       final bytes = await repo.exportReceipts(
-        format: format,
-        month: now.month,
-        year: now.year,
-      );
-
-      // Save to temporary file
+          format: format, month: now.month, year: now.year);
       final tempDir = await getTemporaryDirectory();
-      final fileName = format == 'pdf' 
+      final fileName = format == 'pdf'
           ? 'relatorio_gastos_${now.month}_${now.year}.pdf'
-          : 'gastos_smart_tracker_${now.month}_${now.year}.xlsx';
+          : 'gastos_notinha_${now.month}_${now.year}.xlsx';
       final file = File('${tempDir.path}/$fileName');
       await file.writeAsBytes(bytes);
-
-      // Share file
-      await Share.shareXFiles([XFile(file.path)], text: 'Meu relatório de gastos - Notinha');
-      
+      await Share.shareXFiles([XFile(file.path)],
+          text: 'Meu relatório de gastos - Notinha');
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro ao exportar: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(
+              content: Text('Erro ao exportar: $e'),
+              backgroundColor: Colors.redAccent),
         );
       }
     }
   }
 
-  void _showExportOptions(BuildContext context, WidgetRef ref) {
+  void _showExportOptions() {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.cardColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Exportar Relatório Mensal', 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('Exportar Relatório Mensal',
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              const Text('Escolha o formato desejado para o mês atual', 
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              const Text('Escolha o formato desejado para o mês atual',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13)),
               const SizedBox(height: 24),
               ListTile(
-                leading: const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent),
+                leading: const Icon(Icons.picture_as_pdf_rounded,
+                    color: Colors.redAccent),
                 title: const Text('Relatório PDF (com Gráficos)'),
                 onTap: () {
                   Navigator.pop(context);
-                  _exportData(context, ref, 'pdf');
+                  _exportData('pdf');
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.table_chart_rounded, color: Colors.greenAccent),
+                leading: const Icon(Icons.table_chart_rounded,
+                    color: Colors.greenAccent),
                 title: const Text('Planilha Excel (Contabilidade)'),
                 onTap: () {
                   Navigator.pop(context);
-                  _exportData(context, ref, 'excel');
+                  _exportData('excel');
                 },
               ),
               const SizedBox(height: 12),
@@ -93,19 +104,20 @@ class HistoryScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final receiptsAsync = ref.watch(receiptsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Histórico', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Histórico',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.file_download_outlined),
             tooltip: 'Exportar Relatórios',
-            onPressed: () => _showExportOptions(context, ref),
+            onPressed: _showExportOptions,
           ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -113,41 +125,99 @@ class HistoryScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => ref.refresh(receiptsProvider.future),
-        color: AppTheme.primaryAction,
-        backgroundColor: AppTheme.cardColor,
-        child: receiptsAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryAction),
-          ),
-          error: (err, _) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.wifi_off_rounded, size: 56, color: Colors.redAccent),
-                const SizedBox(height: 16),
-                Text('Erro: $err',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.textSecondary)),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(receiptsProvider),
-                  child: const Text('Tentar novamente'),
-                ),
-              ],
+      body: Column(
+        children: [
+          // ── Search bar ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SearchBar(
+              controller: _searchController,
+              hintText: 'Buscar por loja...',
+              leading: const Icon(Icons.search_rounded),
+              trailing: _searchQuery.isNotEmpty
+                  ? [
+                      IconButton(
+                        icon: const Icon(Icons.clear_rounded),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    ]
+                  : null,
+              onChanged: (v) => setState(() => _searchQuery = v),
+              backgroundColor: WidgetStatePropertyAll(AppTheme.cardColor),
+              shadowColor:
+                  const WidgetStatePropertyAll(Colors.transparent),
+              padding: const WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(horizontal: 12)),
             ),
           ),
-          data: (receipts) => _HistoryList(receipts: receipts),
-        ),
+
+          // ── List ──
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () => ref.refresh(receiptsProvider.future),
+              color: AppTheme.primaryAction,
+              backgroundColor: AppTheme.cardColor,
+              child: receiptsAsync.when(
+                loading: () => const Center(
+                  child: CircularProgressIndicator(
+                      color: AppTheme.primaryAction),
+                ),
+                error: (err, _) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.wifi_off_rounded,
+                          size: 56, color: Colors.redAccent),
+                      const SizedBox(height: 16),
+                      Text('Erro: $err',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary)),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(receiptsProvider),
+                        child: const Text('Tentar novamente'),
+                      ),
+                    ],
+                  ),
+                ),
+                data: (receipts) {
+                  final filtered = _searchQuery.isEmpty
+                      ? receipts
+                      : receipts
+                          .where((r) => r.storeName
+                              .toLowerCase()
+                              .contains(_searchQuery.toLowerCase()))
+                          .toList();
+                  return _HistoryList(
+                    receipts: filtered,
+                    onDelete: (id) async {
+                      await ref
+                          .read(receiptRepositoryProvider)
+                          .deleteReceipt(id);
+                      ref.invalidate(receiptsProvider);
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _HistoryList extends StatelessWidget {
   final List<Receipt> receipts;
-  const _HistoryList({required this.receipts});
+  final Future<void> Function(int id) onDelete;
+
+  const _HistoryList({required this.receipts, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -157,19 +227,22 @@ class _HistoryList extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.history_rounded,
-                size: 64, color: AppTheme.textSecondary.withOpacity(0.4)),
+                size: 64,
+                color: AppTheme.textSecondary.withOpacity(0.4)),
             const SizedBox(height: 16),
-            Text('Nenhum recibo no histórico',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 16)),
+            const Text('Nenhum recibo encontrado',
+                style: TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 16)),
           ],
         ),
       );
     }
 
-    final currencyFmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    final currencyFmt =
+        NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     final dateFmt = DateFormat('dd/MM/yyyy • HH:mm', 'pt_BR');
 
-    // Group receipts by month
+    // Group by month
     final grouped = <String, List<Receipt>>{};
     for (final r in receipts) {
       final key = DateFormat('MMMM y', 'pt_BR').format(r.date);
@@ -182,13 +255,15 @@ class _HistoryList extends StatelessWidget {
       itemBuilder: (context, groupIdx) {
         final month = grouped.keys.elementAt(groupIdx);
         final monthReceipts = grouped[month]!;
-        final monthTotal = monthReceipts.fold(0.0, (s, r) => s + r.totalAmount);
+        final monthTotal =
+            monthReceipts.fold(0.0, (s, r) => s + r.totalAmount);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: AppTheme.spaceSM, top: AppTheme.spaceSM),
+              padding: const EdgeInsets.only(
+                  bottom: AppTheme.spaceSM, top: AppTheme.spaceSM),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -210,10 +285,11 @@ class _HistoryList extends StatelessWidget {
             ),
             ...monthReceipts.map((r) => Padding(
                   padding: const EdgeInsets.only(bottom: AppTheme.spaceSM),
-                  child: _ReceiptCard(
+                  child: _SwipeToDeleteCard(
                     receipt: r,
                     currencyFmt: currencyFmt,
                     dateFmt: dateFmt,
+                    onDelete: onDelete,
                   ),
                 )),
             const Divider(height: AppTheme.spaceLG, color: Colors.white12),
@@ -224,7 +300,78 @@ class _HistoryList extends StatelessWidget {
   }
 }
 
-// ── Receipt Card ──────────────────────────────────────────────────────────────
+// ── Swipe-to-delete wrapper ──────────────────────────────────────────────────
+
+class _SwipeToDeleteCard extends StatelessWidget {
+  final Receipt receipt;
+  final NumberFormat currencyFmt;
+  final DateFormat dateFmt;
+  final Future<void> Function(int) onDelete;
+
+  const _SwipeToDeleteCard({
+    required this.receipt,
+    required this.currencyFmt,
+    required this.dateFmt,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: ValueKey(receipt.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.redAccent.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+            SizedBox(width: 6),
+            Text('Apagar',
+                style: TextStyle(
+                    color: Colors.redAccent, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+      confirmDismiss: (_) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: AppTheme.cardColor,
+            title: const Text('Apagar recibo'),
+            content: Text(
+                'Deseja apagar permanentemente o recibo de ${receipt.storeName}?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Apagar'),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (_) => onDelete(receipt.id),
+      child: _ReceiptCard(
+        receipt: receipt,
+        currencyFmt: currencyFmt,
+        dateFmt: dateFmt,
+      ),
+    );
+  }
+}
+
+// ── Receipt Card ─────────────────────────────────────────────────────────────
 
 class _ReceiptCard extends StatelessWidget {
   final Receipt receipt;
@@ -248,7 +395,6 @@ class _ReceiptCard extends StatelessWidget {
           padding: const EdgeInsets.all(AppTheme.spaceMD),
           child: Row(
             children: [
-              // Icon
               Container(
                 width: 48,
                 height: 48,
@@ -257,10 +403,10 @@ class _ReceiptCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppTheme.radiusMD),
                 ),
                 child: const Icon(Icons.receipt_rounded,
-                    color: AppTheme.primaryAction, size: AppTheme.iconSizeMD),
+                    color: AppTheme.primaryAction,
+                    size: AppTheme.iconSizeMD),
               ),
               const SizedBox(width: AppTheme.spaceMD),
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,7 +450,6 @@ class _ReceiptCard extends StatelessWidget {
                   ],
                 ),
               ),
-              // Value + arrow
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [

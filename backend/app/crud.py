@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 from sqlalchemy import extract, func
 from . import models, schemas, categorizer
+from .sefaz_registry import detect_state
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -114,6 +115,14 @@ def get_budget_status(db: Session, month: int, year: int, user_id: int = 1):
 
 def get_receipt(db: Session, receipt_id: int):
     return db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+
+def delete_receipt(db: Session, receipt_id: int) -> bool:
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    if receipt is None:
+        return False
+    db.delete(receipt)
+    db.commit()
+    return True
 
 def get_receipts(db: Session, skip: int = 0, limit: int = 100):
     user = get_user(db)
@@ -418,6 +427,7 @@ def parse_nfce_url(qr_url: str) -> schemas.ReceiptCreate:
     4. If both fail, saves a minimal receipt preserving the QR data.
     """
     access_key = _extract_access_key(qr_url)
+    emit_state = detect_state(qr_url, access_key)
 
     try:
         resp = requests.get(

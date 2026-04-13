@@ -4,6 +4,68 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
+import '../providers/settings_provider.dart';
+
+// ── SEFAZ state detection (mirrors backend sefaz_registry.py) ────────────────
+
+const _sefazDomains = <String, String>{
+  'nfce.sefaz.pe.gov.br': 'PE',
+  'www.nfce.fazenda.sp.gov.br': 'SP',
+  'nfce.fazenda.sp.gov.br': 'SP',
+  'nfce.fazenda.rj.gov.br': 'RJ',
+  'www.fazenda.rj.gov.br': 'RJ',
+  'nfce.sefaz.ba.gov.br': 'BA',
+  'nfce.sefaz.mg.gov.br': 'MG',
+  'www.fazenda.mg.gov.br': 'MG',
+  'nfce.sefaz.rs.gov.br': 'RS',
+  'nfce.sefaz.pr.gov.br': 'PR',
+  'sat.sef.sc.gov.br': 'SC',
+  'nfce.sef.sc.gov.br': 'SC',
+  'nfce.sefaz.ce.gov.br': 'CE',
+  'nfce.sefaz.go.gov.br': 'GO',
+  'sistemas.sefaz.am.gov.br': 'AM',
+  'nfce.sefaz.ma.gov.br': 'MA',
+  'nfce.sefaz.mt.gov.br': 'MT',
+  'nfce.sefaz.ms.gov.br': 'MS',
+  'nfce.sefaz.es.gov.br': 'ES',
+  'nfce.sefaz.pi.gov.br': 'PI',
+  'nfce.sefaz.rn.gov.br': 'RN',
+  'nfce.sefaz.pb.gov.br': 'PB',
+  'nfce.sefaz.al.gov.br': 'AL',
+  'nfce.sefaz.se.gov.br': 'SE',
+  'nfce.sefaz.ro.gov.br': 'RO',
+  'nfce.sefaz.to.gov.br': 'TO',
+  'nfce.sefaz.pa.gov.br': 'PA',
+};
+
+const _cufToState = <String, String>{
+  '11': 'RO', '12': 'AC', '13': 'AM', '14': 'RR', '15': 'PA',
+  '16': 'AP', '17': 'TO', '21': 'MA', '22': 'PI', '23': 'CE',
+  '24': 'RN', '25': 'PB', '26': 'PE', '27': 'AL', '28': 'SE',
+  '29': 'BA', '31': 'MG', '32': 'ES', '33': 'RJ', '35': 'SP',
+  '41': 'PR', '42': 'SC', '43': 'RS', '50': 'MS', '51': 'MT',
+  '52': 'GO', '53': 'DF',
+};
+
+String? _detectStateFromUrl(String url) {
+  try {
+    final host = Uri.parse(url).host;
+    return _sefazDomains[host];
+  } catch (_) {
+    return null;
+  }
+}
+
+String? _detectStateFromKey(String key) {
+  final digits = key.replaceAll(RegExp(r'\D'), '');
+  if (digits.length >= 2) return _cufToState[digits.substring(0, 2)];
+  return null;
+}
+
+String? _detectState(String url) =>
+    _detectStateFromUrl(url) ?? _detectStateFromKey(url);
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key});
@@ -37,20 +99,26 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     setState(() => _hasScanned = true);
     _controller.stop();
 
+    await _processScan(rawValue);
+  }
+
+  Future<void> _processScan(String qrUrl) async {
     await ref.read(scanReceiptProvider.notifier).scan(
-          rawValue,
-          onSuccess: () {
-            final result = ref.read(scanReceiptProvider);
-            if (result.receipt != null) {
-              // Invalidate dashboard so it refreshes
-              ref.invalidate(receiptsProvider);
-              // Navigate to detail screen
-              if (mounted) {
-                context.pushReplacement('/receipt/${result.receipt!.id}');
-              }
-            }
-          },
-        );
+      qrUrl,
+      onSuccess: () async {
+        final result = ref.read(scanReceiptProvider);
+        if (result.receipt != null) {
+          ref.invalidate(receiptsProvider);
+
+          // Geo-aware: check if QR state differs from user's default
+          await _checkStateChange(qrUrl);
+
+          if (mounted) {
+            context.pushReplacement('/receipt/${result.receipt!.id}');
+          }
+        }
+      },
+    );
 
     // If error, allow re-scan
     final result = ref.read(scanReceiptProvider);
@@ -58,6 +126,116 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
       setState(() => _hasScanned = false);
       _controller.start();
     }
+  }
+
+  Future<void> _checkStateChange(String qrUrl) async {
+    final settingsAsync = ref.read(settingsProvider);
+    if (!settingsAsync.hasValue) return;
+    final settings = settingsAsync.value!;
+
+    if (!settings.detectStateFromQr || !settings.askOnStateChange) return;
+
+    final detectedState = _detectState(qrUrl);
+    if (detectedState == null || detectedState == settings.defaultState) return;
+
+    if (!mounted) return;
+
+    final adopt = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.location_on_rounded,
+                      color: AppTheme.primaryAction),
+                  const SizedBox(width: 8),
+                  Text(
+                    'SEFAZ detectada: $detectedState',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Essa nota é de $detectedState, mas sua SEFAZ padrão é ${settings.defaultState}. '
+                'Deseja atualizar para $detectedState?',
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Manter atual'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: Text('Usar $detectedState'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (adopt == true) {
+      final updated = settingsAsync.value!.copyWith(defaultState: detectedState);
+      await ref.read(settingsProvider.notifier).save(updated);
+    }
+  }
+
+  void _showManualUrlDialog() {
+    final controller = TextEditingController();
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.cardColor,
+        title: const Text('Digitar link da nota'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.url,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'https://nfce.sefaz...',
+            prefixIcon: Icon(Icons.link_rounded),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final url = controller.text.trim();
+              if (url.isEmpty) return;
+              Navigator.pop(ctx);
+              setState(() => _hasScanned = true);
+              _processScan(url);
+            },
+            child: const Text('Escanear'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -96,7 +274,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
           // Overlay with scanning frame
           _ScannerOverlay(),
 
-          // Instruction label
+          // Status + mode 2 button
           Positioned(
             bottom: 48,
             left: 0,
@@ -122,6 +300,20 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     message: 'Aponte para o QR Code da nota fiscal',
                     color: Colors.white70,
                   ),
+
+                // Mode 2: manual URL entry
+                if (scanState.state != ScanState.loading) ...[
+                  const SizedBox(height: 16),
+                  TextButton.icon(
+                    onPressed: _showManualUrlDialog,
+                    icon: const Icon(Icons.keyboard_rounded,
+                        color: Colors.white54, size: 16),
+                    label: const Text(
+                      'Digitar link',
+                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -181,7 +373,7 @@ class _ScannerOverlay extends StatelessWidget {
             ),
           ),
         ),
-        // Corner accents (neon L-shapes at each corner)
+        // Corner accents
         Align(
           alignment: Alignment.center,
           child: SizedBox(

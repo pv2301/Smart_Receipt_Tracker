@@ -18,6 +18,9 @@ abstract class ReceiptRepository {
   Future<void> updateBudgetSettings(double defaultBudget, bool isFixed);
   Future<void> setMonthlyGoal(int month, int year, double amount);
 
+  // Deletion
+  Future<void> deleteReceipt(int id);
+
   // Reporting
   Future<Uint8List> exportReceipts(
       {required String format, int? month, int? year});
@@ -101,6 +104,11 @@ class ApiReceiptRepository implements ReceiptRepository {
         'amount': amount,
       },
     );
+  }
+
+  @override
+  Future<void> deleteReceipt(int id) async {
+    await _dio.delete('/receipts/$id');
   }
 
   @override
