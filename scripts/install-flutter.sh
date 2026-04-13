@@ -2,20 +2,20 @@
 # install-flutter.sh
 set -e
 
-# Clone Flutter if not exists
-if [ ! -d "flutter" ]; then
-  echo "Cloning Flutter SDK..."
-  git clone https://github.com/flutter/flutter.git -b stable --depth 1
+# Clone Flutter FORA do diretório do projeto para não entrar no bundle da Lambda
+FLUTTER_HOME="/tmp/flutter-sdk"
+
+if [ ! -d "$FLUTTER_HOME" ]; then
+  echo "Cloning Flutter SDK para $FLUTTER_HOME..."
+  git clone https://github.com/flutter/flutter.git -b stable --depth 1 "$FLUTTER_HOME"
 else
-  echo "Flutter SDK exists."
+  echo "Flutter SDK já existe em $FLUTTER_HOME."
 fi
 
-# Add to PATH
-export PATH="$PATH:$(pwd)/flutter/bin"
+export PATH="$PATH:$FLUTTER_HOME/bin"
 
-# Pre-warm Flutter for web (flutter doctor fails on CI without Android/Xcode — ignore)
 flutter config --enable-web
-flutter doctor --version 2>/dev/null || true
+flutter --version 2>/dev/null || true
 
 cd frontend
 flutter pub get

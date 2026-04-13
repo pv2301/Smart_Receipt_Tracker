@@ -2,8 +2,9 @@
 # build-web.sh
 set -e
 
-# Add to PATH (path from install script)
-export PATH="$PATH:`pwd`/flutter/bin"
+# Flutter foi instalado em /tmp/flutter-sdk pelo install script
+FLUTTER_HOME="/tmp/flutter-sdk"
+export PATH="$PATH:$FLUTTER_HOME/bin"
 
 echo "Running build..."
 cd frontend
