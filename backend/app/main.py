@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import io
-from . import models, schemas, crud, suggester_service, report_service
+from . import models, schemas, crud, suggester_service
 from .database import engine, get_db
 from datetime import datetime
 
@@ -63,6 +63,8 @@ def export_receipts(
     """
     Gera e retorna um relatório (PDF ou Excel) dos recibos do período.
     """
+    # Import lazy para evitar carregar pandas/matplotlib na inicialização da Lambda
+    from . import report_service
     if format == "pdf":
         content = report_service.generate_pdf_report(db, month, year)
         return StreamingResponse(
