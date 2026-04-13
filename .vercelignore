@@ -6,4 +6,5 @@ flutter_sdk/
 docker-compose.yml
 
 # requirements.txt raiz (Lambda usa api/requirements.txt)
-requirements.txt
+# Âncora /: exclui SOMENTE a raiz, não api/requirements.txt nem backend/requirements.txt
+/requirements.txt
