@@ -144,6 +144,12 @@ class NotificationService {
     );
   }
 
+  /// Cancela uma notificação agendada pelo id
+  Future<void> cancelNotification(int id) async {
+    if (kIsWeb) return;
+    await _notificationsPlugin.cancel(id);
+  }
+
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
     tz.TZDateTime scheduledDate =

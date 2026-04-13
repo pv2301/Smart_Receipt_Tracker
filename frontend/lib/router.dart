@@ -6,6 +6,7 @@ import 'presentation/screens/scanner_screen.dart';
 import 'presentation/screens/history_screen.dart';
 import 'presentation/screens/shopping_list_screen.dart';
 import 'presentation/screens/receipt_detail_screen.dart';
+import 'presentation/screens/settings_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey =
     GlobalKey<NavigatorState>(debugLabel: 'root');
@@ -34,8 +35,7 @@ final goRouter = GoRouter(
         ),
         GoRoute(
           path: '/settings',
-          builder: (context, state) =>
-              const Center(child: Text('Configurações (Em breve)')),
+          builder: (context, state) => const SettingsScreen(),
         ),
       ],
     ),
