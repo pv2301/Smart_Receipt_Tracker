@@ -177,7 +177,7 @@ class _HistoryList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.spaceMD),
       itemCount: grouped.length,
       itemBuilder: (context, groupIdx) {
         final month = grouped.keys.elementAt(groupIdx);
@@ -187,65 +187,143 @@ class _HistoryList extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Month header
             Padding(
-              padding: const EdgeInsets.only(bottom: 10, top: 8),
+              padding: const EdgeInsets.only(bottom: AppTheme.spaceSM, top: AppTheme.spaceSM),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     '${month[0].toUpperCase()}${month.substring(1)}',
                     style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: AppTheme.fontLG,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.primaryAction),
                   ),
                   Text(
                     currencyFmt.format(monthTotal),
-                    style: TextStyle(
-                        color: AppTheme.textSecondary, fontSize: 13),
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: AppTheme.fontSM),
                   ),
                 ],
               ),
             ),
-            // Receipts in month
             ...monthReceipts.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Card(
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => context.push('/receipt/${r.id}'),
-                      child: ListTile(
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        leading: CircleAvatar(
-                          backgroundColor: AppTheme.primaryAction.withOpacity(0.12),
-                          child: const Icon(Icons.receipt_rounded,
-                              color: AppTheme.primaryAction, size: 20),
-                        ),
-                        title: Text(r.storeName,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                        subtitle: Text(
-                          '${dateFmt.format(r.date)} · ${r.items.length} itens',
-                          style: TextStyle(
-                              color: AppTheme.textSecondary, fontSize: 12),
-                        ),
-                        trailing: Text(
-                          currencyFmt.format(r.totalAmount),
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryAction),
-                        ),
-                      ),
-                    ),
+                  padding: const EdgeInsets.only(bottom: AppTheme.spaceSM),
+                  child: _ReceiptCard(
+                    receipt: r,
+                    currencyFmt: currencyFmt,
+                    dateFmt: dateFmt,
                   ),
                 )),
-            const Divider(height: 24),
+            const Divider(height: AppTheme.spaceLG, color: Colors.white12),
           ],
         );
       },
+    );
+  }
+}
+
+// ── Receipt Card ──────────────────────────────────────────────────────────────
+
+class _ReceiptCard extends StatelessWidget {
+  final Receipt receipt;
+  final NumberFormat currencyFmt;
+  final DateFormat dateFmt;
+
+  const _ReceiptCard({
+    required this.receipt,
+    required this.currencyFmt,
+    required this.dateFmt,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final itemCount = receipt.items.length;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+        onTap: () => context.push('/receipt/${receipt.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(AppTheme.spaceMD),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryAction.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+                ),
+                child: const Icon(Icons.receipt_rounded,
+                    color: AppTheme.primaryAction, size: AppTheme.iconSizeMD),
+              ),
+              const SizedBox(width: AppTheme.spaceMD),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      receipt.storeName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: AppTheme.fontMD),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppTheme.spaceXS),
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time_rounded,
+                            size: 11, color: AppTheme.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          dateFmt.format(receipt.date),
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: AppTheme.fontSM),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.shopping_basket_rounded,
+                            size: 11, color: AppTheme.textSecondary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$itemCount ${itemCount == 1 ? "item" : "itens"}',
+                          style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: AppTheme.fontSM),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Value + arrow
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    currencyFmt.format(receipt.totalAmount),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: AppTheme.fontLG,
+                        color: AppTheme.primaryAction),
+                  ),
+                  const SizedBox(height: AppTheme.spaceXS),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppTheme.textSecondary, size: 18),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
