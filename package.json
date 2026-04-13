@@ -1,7 +1,7 @@
 {
-  "name": "smart-receipt-tracker",
+  "name": "notinha",
   "version": "1.0.0",
-  "description": "Smart Receipt Tracker",
+  "description": "Notinha — escaneie NFC-e e controle seus gastos",
   "scripts": {
     "install:flutter": "bash scripts/install-flutter.sh",
     "build": "bash scripts/build-web.sh"

@@ -38,7 +38,7 @@ class HistoryScreen extends ConsumerWidget {
       await file.writeAsBytes(bytes);
 
       // Share file
-      await Share.shareXFiles([XFile(file.path)], text: 'Meu relatório de gastos - Smart Receipt Tracker');
+      await Share.shareXFiles([XFile(file.path)], text: 'Meu relatório de gastos - Notinha');
       
     } catch (e) {
       if (context.mounted) {

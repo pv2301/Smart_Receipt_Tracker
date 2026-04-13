@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Smart Receipt Tracker',
+      title: 'Notinha',
       theme: AppTheme.darkTheme,
       routerConfig: goRouter,
       debugShowCheckedModeBanner: false,
