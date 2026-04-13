@@ -131,7 +131,7 @@ class _BudgetSection extends ConsumerWidget {
           isSelected: [settings.isBudgetFixed, !settings.isBudgetFixed],
           onPressed: (i) async {
             final updated = settings.copyWith(isBudgetFixed: i == 0);
-            await ref.read(settingsProvider.notifier).update(updated);
+            await ref.read(settingsProvider.notifier).save(updated);
             await ref.read(receiptRepositoryProvider).updateBudgetSettings(
               updated.defaultBudget, updated.isBudgetFixed,
             );
@@ -175,7 +175,7 @@ class _BudgetSection extends ConsumerWidget {
     if (confirmed != true) return;
     final value = double.tryParse(controller.text.replaceAll(',', '.')) ?? 0.0;
     final updated = settings.copyWith(defaultBudget: value);
-    await ref.read(settingsProvider.notifier).update(updated);
+    await ref.read(settingsProvider.notifier).save(updated);
     await ref.read(receiptRepositoryProvider).updateBudgetSettings(
       updated.defaultBudget, updated.isBudgetFixed,
     );
@@ -206,7 +206,7 @@ class _LocationSection extends ConsumerWidget {
               .toList(),
           onChanged: (v) async {
             if (v == null) return;
-            await ref.read(settingsProvider.notifier).update(settings.copyWith(defaultState: v));
+            await ref.read(settingsProvider.notifier).save(settings.copyWith(defaultState: v));
           },
         ),
       ),
@@ -217,7 +217,7 @@ class _LocationSection extends ConsumerWidget {
         value: settings.detectStateFromQr,
         activeColor: AppTheme.primaryAction,
         onChanged: (v) async {
-          await ref.read(settingsProvider.notifier).update(settings.copyWith(detectStateFromQr: v));
+          await ref.read(settingsProvider.notifier).save(settings.copyWith(detectStateFromQr: v));
         },
       ),
       SwitchListTile(
@@ -228,7 +228,7 @@ class _LocationSection extends ConsumerWidget {
         activeColor: AppTheme.primaryAction,
         onChanged: settings.detectStateFromQr
             ? (v) async {
-                await ref.read(settingsProvider.notifier).update(settings.copyWith(askOnStateChange: v));
+                await ref.read(settingsProvider.notifier).save(settings.copyWith(askOnStateChange: v));
               }
             : null,
       ),
@@ -253,7 +253,7 @@ class _NotificationsSection extends ConsumerWidget {
         activeColor: AppTheme.primaryAction,
         onChanged: (v) async {
           final updated = settings.copyWith(dailyReminderEnabled: v);
-          await ref.read(settingsProvider.notifier).update(updated);
+          await ref.read(settingsProvider.notifier).save(updated);
           final svc = NotificationService();
           if (v) {
             await svc.scheduleDailyReminder(
@@ -291,7 +291,7 @@ class _NotificationsSection extends ConsumerWidget {
                   reminderHour: picked.hour,
                   reminderMinute: picked.minute,
                 );
-                await ref.read(settingsProvider.notifier).update(updated);
+                await ref.read(settingsProvider.notifier).save(updated);
                 await NotificationService().scheduleDailyReminder(
                   id: 1000,
                   hour: picked.hour,
@@ -307,7 +307,7 @@ class _NotificationsSection extends ConsumerWidget {
         value: settings.budgetAlertEnabled,
         activeColor: AppTheme.primaryAction,
         onChanged: (v) async {
-          await ref.read(settingsProvider.notifier).update(settings.copyWith(budgetAlertEnabled: v));
+          await ref.read(settingsProvider.notifier).save(settings.copyWith(budgetAlertEnabled: v));
         },
       ),
       ListTile(
@@ -327,7 +327,7 @@ class _NotificationsSection extends ConsumerWidget {
           onChanged: settings.budgetAlertEnabled
               ? (v) async {
                   if (v == null) return;
-                  await ref.read(settingsProvider.notifier).update(
+                  await ref.read(settingsProvider.notifier).save(
                     settings.copyWith(budgetAlertPercent: v),
                   );
                 }

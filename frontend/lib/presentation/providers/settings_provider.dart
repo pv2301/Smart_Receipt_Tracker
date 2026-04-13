@@ -91,7 +91,7 @@ class SettingsNotifier extends AsyncNotifier<AppSettings> {
     );
   }
 
-  Future<void> update(AppSettings updated) async {
+  Future<void> save(AppSettings updated) async {
     await _prefs.setDouble(_kDefaultBudget,       updated.defaultBudget);
     await _prefs.setBool(_kIsBudgetFixed,          updated.isBudgetFixed);
     await _prefs.setString(_kDefaultState,         updated.defaultState);
