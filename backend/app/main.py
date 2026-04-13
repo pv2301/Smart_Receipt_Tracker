@@ -8,9 +8,13 @@ from . import models, schemas, crud, suggester_service
 from .database import engine, get_db
 from datetime import datetime
 
-models.Base.metadata.create_all(bind=engine)
+try:
+    models.Base.metadata.create_all(bind=engine)
+except Exception as _db_init_err:
+    import logging
+    logging.warning(f"[startup] create_all falhou: {_db_init_err}")
 
-app = FastAPI(title="Smart Receipt Tracker")
+app = FastAPI(title="Notinha")
 
 # Configure CORS for Flutter Web
 app.add_middleware(
