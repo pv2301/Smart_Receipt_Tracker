@@ -1,9 +1,6 @@
-# Flutter SDK clonado localmente (não necessário pela Lambda)
+# Flutter SDK clonado localmente (não necessário no Vercel — o build clona em /tmp)
 flutter/
 flutter_sdk/
-
-# Código-fonte Flutter (o output está em frontend/build/web)
-frontend/
 
 # Docker
 docker-compose.yml
