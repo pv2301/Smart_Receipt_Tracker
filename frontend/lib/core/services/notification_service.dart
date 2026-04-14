@@ -137,7 +137,7 @@ class NotificationService {
       body: 'Confira os itens que estão acabando na sua Lista Inteligente.',
       scheduledDate: _nextInstanceOfTime(hour, minute),
       notificationDetails: platformChannelSpecifics,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
