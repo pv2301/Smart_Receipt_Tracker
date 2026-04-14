@@ -113,11 +113,93 @@ def generate_excel_report(db: Session, month: int, year: int, user_id: int = 1):
                 "Total Item": item.total_price,
                 "Categoria": item.category or "Outros"
             })
-    
+
     df = pd.DataFrame(data)
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Gastos Detalhados')
-    
+
     output.seek(0)
-    return output.getValue()
+    return output.getvalue()
+
+
+def generate_single_receipt_pdf(db: Session, receipt_id: int) -> bytes:
+    """Gera PDF de um único recibo pelo ID."""
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", size=12)
+
+    if not receipt:
+        pdf.cell(0, 10, "Recibo não encontrado.", ln=True)
+        return pdf.output()
+
+    # Cabeçalho
+    pdf.set_font("Helvetica", 'B', 14)
+    pdf.cell(0, 10, receipt.store_name[:60], ln=True)
+    pdf.set_font("Helvetica", size=10)
+    if receipt.merchant_id:
+        pdf.cell(0, 8, f"CNPJ: {receipt.merchant_id}", ln=True)
+    pdf.cell(0, 8, f"Data: {receipt.date.strftime('%d/%m/%Y %H:%M')}", ln=True)
+    pdf.ln(4)
+
+    # Itens
+    pdf.set_font("Helvetica", 'B', 10)
+    pdf.set_fill_color(23, 32, 51)
+    pdf.set_text_color(255, 255, 255)
+    pdf.cell(100, 8, "Produto", 1, 0, 'L', True)
+    pdf.cell(20, 8, "Qtd", 1, 0, 'C', True)
+    pdf.cell(35, 8, "Unit.", 1, 0, 'R', True)
+    pdf.cell(35, 8, "Total", 1, 1, 'R', True)
+
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font("Helvetica", size=9)
+    for item in receipt.items:
+        qty = f"{item.quantity:.0f}" if item.quantity == int(item.quantity) else f"{item.quantity:.3f}"
+        pdf.cell(100, 7, item.product_name[:45], 1)
+        pdf.cell(20, 7, qty, 1, 0, 'C')
+        pdf.cell(35, 7, f"R$ {item.unit_price:.2f}", 1, 0, 'R')
+        pdf.cell(35, 7, f"R$ {item.total_price:.2f}", 1, 1, 'R')
+
+    pdf.ln(4)
+    pdf.set_font("Helvetica", 'B', 11)
+    pdf.cell(0, 9, f"Total: R$ {receipt.total_amount:.2f}", ln=True)
+
+    if receipt.tax_state is not None or receipt.tax_federal is not None:
+        state_v = receipt.tax_state or 0
+        fed_v = receipt.tax_federal or 0
+        pdf.set_font("Helvetica", size=9)
+        pdf.cell(0, 7, f"Impostos: Estadual R$ {state_v:.2f} | Federal R$ {fed_v:.2f}", ln=True)
+    elif receipt.taxes and receipt.taxes > 0:
+        pdf.set_font("Helvetica", size=9)
+        pdf.cell(0, 7, f"Impostos (total): R$ {receipt.taxes:.2f}", ln=True)
+
+    pdf.ln(6)
+    pdf.set_font("Helvetica", 'I', 8)
+    pdf.cell(0, 6, "Gerado pelo Notinha", ln=True)
+    return pdf.output()
+
+
+def generate_single_receipt_excel(db: Session, receipt_id: int) -> bytes:
+    """Gera planilha Excel de um único recibo pelo ID."""
+    receipt = db.query(models.Receipt).filter(models.Receipt.id == receipt_id).first()
+
+    data = []
+    if receipt:
+        for item in receipt.items:
+            data.append({
+                "Loja": receipt.store_name,
+                "Data": receipt.date.strftime('%d/%m/%Y %H:%M'),
+                "Produto": item.product_name,
+                "Quantidade": item.quantity,
+                "Custo Unit (R$)": item.unit_price,
+                "Total Item (R$)": item.total_price,
+                "Categoria": item.category or "Outros",
+            })
+
+    df = pd.DataFrame(data)
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Recibo')
+    output.seek(0)
+    return output.getvalue()

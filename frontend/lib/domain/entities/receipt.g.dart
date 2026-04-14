@@ -34,6 +34,8 @@ _Receipt _$ReceiptFromJson(Map<String, dynamic> json) => _Receipt(
   date: DateTime.parse(json['date'] as String),
   totalAmount: (json['total_amount'] as num).toDouble(),
   taxes: (json['taxes'] as num?)?.toDouble(),
+  taxState: (json['tax_state'] as num?)?.toDouble(),
+  taxFederal: (json['tax_federal'] as num?)?.toDouble(),
   qrData: json['qr_data'] as String?,
   accessKey: json['access_key'] as String?,
   items:
@@ -50,6 +52,8 @@ Map<String, dynamic> _$ReceiptToJson(_Receipt instance) => <String, dynamic>{
   'date': instance.date.toIso8601String(),
   'total_amount': instance.totalAmount,
   'taxes': instance.taxes,
+  'tax_state': instance.taxState,
+  'tax_federal': instance.taxFederal,
   'qr_data': instance.qrData,
   'access_key': instance.accessKey,
   'items': instance.items,

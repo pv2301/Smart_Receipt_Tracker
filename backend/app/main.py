@@ -84,6 +84,29 @@ def export_receipts(
             headers={"Content-Disposition": f"attachment; filename=gastos_{year}_{month}.xlsx"}
         )
 
+@app.get("/receipts/{receipt_id}/export")
+def export_single_receipt(
+    receipt_id: int,
+    format: str = Query("pdf", pattern="^(pdf|excel)$"),
+    db: Session = Depends(get_db)
+):
+    """Gera PDF ou Excel de um único recibo pelo ID."""
+    from . import report_service
+    if format == "pdf":
+        content = report_service.generate_single_receipt_pdf(db, receipt_id)
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=recibo_{receipt_id}.pdf"}
+        )
+    else:
+        content = report_service.generate_single_receipt_excel(db, receipt_id)
+        return StreamingResponse(
+            io.BytesIO(content),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=recibo_{receipt_id}.xlsx"}
+        )
+
 @app.get("/receipts/", response_model=List[schemas.Receipt])
 def read_receipts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     receipts = crud.get_receipts(db, skip=skip, limit=limit)
@@ -127,6 +150,14 @@ def get_shopping_suggestions(categories: Optional[List[str]] = Query(None), db: 
     """
     return suggester_service.get_suggestions(db, categories=categories)
 
+@app.patch("/receipt-items/{item_id}", response_model=schemas.ReceiptItem)
+def update_receipt_item(item_id: int, patch: schemas.ReceiptItemPatch, db: Session = Depends(get_db)):
+    """Atualiza campos de um item de recibo (ex: corrigir categoria)."""
+    item = crud.patch_receipt_item(db, item_id=item_id, patch=patch)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Item não encontrado")
+    return item
+
 @app.post("/receipts/scan", response_model=schemas.Receipt)
 def scan_receipt(qr_url: str, db: Session = Depends(get_db)):
     # Parse the QR URL to create receipt object structure
@@ -134,6 +165,6 @@ def scan_receipt(qr_url: str, db: Session = Depends(get_db)):
         receipt_in = crud.parse_nfce_url(qr_url)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse QR code: {str(e)}")
-    
+
     # Save to database
     return crud.create_receipt(db=db, receipt=receipt_in)

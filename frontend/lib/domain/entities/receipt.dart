@@ -28,6 +28,8 @@ abstract class Receipt with _$Receipt {
     required DateTime date,
     @JsonKey(name: 'total_amount') required double totalAmount,
     double? taxes,
+    @JsonKey(name: 'tax_state') double? taxState,
+    @JsonKey(name: 'tax_federal') double? taxFederal,
     @JsonKey(name: 'qr_data') String? qrData,
     @JsonKey(name: 'access_key') String? accessKey,
     @Default([]) List<ReceiptItem> items,

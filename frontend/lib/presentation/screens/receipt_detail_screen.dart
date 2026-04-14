@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,19 @@ import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../../data/receipt_repository.dart';
 import '../../domain/entities/receipt.dart';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/// Exibe "Alim. Frios" para "Alimentos/Frios", ou a categoria inteira se não houver subcategoria.
+String _displayCategory(String? cat) {
+  if (cat == null || cat.isEmpty) return '';
+  final parts = cat.split('/');
+  if (parts.length < 2) return cat;
+  final prefix = parts[0].length >= 5 ? '${parts[0].substring(0, 5)}.' : parts[0];
+  return '$prefix ${parts[1]}';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class ReceiptDetailScreen extends ConsumerWidget {
   final int receiptId;
@@ -38,8 +53,8 @@ class ReceiptDetailScreen extends ConsumerWidget {
           actions: [
             IconButton(
               icon: const Icon(Icons.share_rounded),
-              tooltip: 'Compartilhar',
-              onPressed: () => _shareReceipt(receipt),
+              tooltip: 'Compartilhar / Exportar',
+              onPressed: () => _showShareSheet(context, ref, receipt),
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline_rounded,
@@ -49,12 +64,69 @@ class ReceiptDetailScreen extends ConsumerWidget {
             ),
           ],
         ),
-        body: _ReceiptDetailContent(receipt: receipt),
+        body: _ReceiptDetailContent(receipt: receipt, receiptId: receiptId),
       ),
     );
   }
 
-  void _shareReceipt(Receipt receipt) {
+  void _showShareSheet(BuildContext context, WidgetRef ref, Receipt receipt) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            const Text('Compartilhar recibo',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            ListTile(
+              leading:
+                  const Icon(Icons.message_rounded, color: AppTheme.primaryAction),
+              title: const Text('Compartilhar como texto'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _shareText(receipt);
+              },
+            ),
+            if (!kIsWeb) ...[
+              ListTile(
+                leading: const Icon(Icons.picture_as_pdf_rounded,
+                    color: AppTheme.primaryAction),
+                title: const Text('Exportar PDF'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _exportFile(context, ref, receipt, 'pdf');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.table_chart_rounded,
+                    color: AppTheme.primaryAction),
+                title: const Text('Exportar Planilha'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _exportFile(context, ref, receipt, 'excel');
+                },
+              ),
+            ],
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _shareText(Receipt receipt) {
     final currFmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     final dateFmt = DateFormat('dd/MM/yyyy HH:mm', 'pt_BR');
 
@@ -74,13 +146,42 @@ class ReceiptDetailScreen extends ConsumerWidget {
     }
     buf.writeln('');
     buf.writeln('*Total: ${currFmt.format(receipt.totalAmount)}*');
-    if (receipt.taxes != null && receipt.taxes! > 0) {
+    if (receipt.taxState != null || receipt.taxFederal != null) {
+      buf.writeln(
+          'Impostos: Estadual ${currFmt.format(receipt.taxState ?? 0)} | Federal ${currFmt.format(receipt.taxFederal ?? 0)}');
+    } else if (receipt.taxes != null && receipt.taxes! > 0) {
       buf.writeln('Impostos: ${currFmt.format(receipt.taxes)}');
     }
     buf.writeln('');
     buf.writeln('Enviado via Notinha 🧾');
 
     Share.share(buf.toString(), subject: 'Nota ${receipt.storeName}');
+  }
+
+  Future<void> _exportFile(BuildContext context, WidgetRef ref,
+      Receipt receipt, String format) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final repo = ref.read(receiptRepositoryProvider);
+      final bytes =
+          await repo.exportSingleReceipt(id: receipt.id, format: format);
+      final ext = format == 'pdf' ? 'pdf' : 'xlsx';
+      final xfile = XFile.fromData(
+        bytes,
+        name: 'recibo_${receipt.id}.$ext',
+        mimeType: format == 'pdf'
+            ? 'application/pdf'
+            : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      await Share.shareXFiles([xfile],
+          subject: 'Recibo ${receipt.storeName}');
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+            content: Text('Erro ao exportar: $e'),
+            backgroundColor: Colors.redAccent),
+      );
+    }
   }
 
   Future<void> _confirmDelete(
@@ -127,7 +228,9 @@ class ReceiptDetailScreen extends ConsumerWidget {
 
 class _ReceiptDetailContent extends StatelessWidget {
   final Receipt receipt;
-  const _ReceiptDetailContent({required this.receipt});
+  final int receiptId;
+  const _ReceiptDetailContent(
+      {required this.receipt, required this.receiptId});
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +297,15 @@ class _ReceiptDetailContent extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 18),
                   ),
-                  if (receipt.taxes != null && receipt.taxes! > 0) ...[
+                  if (receipt.taxState != null || receipt.taxFederal != null) ...[
+                    const SizedBox(height: 8),
+                    _InfoRow(
+                      label: 'Impostos',
+                      value:
+                          'Estadual ${currencyFmt.format(receipt.taxState ?? 0)} | Federal ${currencyFmt.format(receipt.taxFederal ?? 0)}',
+                      icon: Icons.receipt_rounded,
+                    ),
+                  ] else if (receipt.taxes != null && receipt.taxes! > 0) ...[
                     const SizedBox(height: 8),
                     _InfoRow(
                       label: 'Impostos',
@@ -246,7 +357,11 @@ class _ReceiptDetailContent extends StatelessWidget {
                     Divider(height: 1, color: Colors.white.withOpacity(0.06)),
                 itemBuilder: (context, index) {
                   final item = receipt.items[index];
-                  return _ItemTile(item: item, formatter: currencyFmt);
+                  return _ItemTile(
+                    item: item,
+                    formatter: currencyFmt,
+                    receiptId: receiptId,
+                  );
                 },
               ),
             ),
@@ -294,58 +409,228 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _ItemTile extends StatelessWidget {
+// ── Categorias disponíveis para seleção manual ────────────────────────────────
+const _kCategories = [
+  'Alimentos/Frios',
+  'Alimentos/Carnes',
+  'Alimentos/Hortifruti',
+  'Alimentos/Panificação',
+  'Alimentos/Grãos',
+  'Alimentos/Laticínios',
+  'Alimentos/Mercearia',
+  'Alimentos',
+  'Bebidas',
+  'Limpeza',
+  'Higiene',
+  'Lazer',
+  'Outros',
+];
+
+class _ItemTile extends ConsumerWidget {
   final ReceiptItem item;
   final NumberFormat formatter;
-  const _ItemTile({required this.item, required this.formatter});
+  final int receiptId;
+  const _ItemTile(
+      {required this.item,
+      required this.formatter,
+      required this.receiptId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final qtyStr = item.quantity % 1 == 0
         ? item.quantity.toInt().toString()
         : item.quantity.toStringAsFixed(3);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.productName,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                    maxLines: 2),
-                const SizedBox(height: 2),
-                Text(
-                  '$qtyStr × ${formatter.format(item.unitPrice)}',
-                  style: const TextStyle(
-                      color: AppTheme.textSecondary, fontSize: 12),
-                ),
-                if (item.category != null)
-                  Container(
-                    margin: const EdgeInsets.only(top: 4),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryAction.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      item.category!,
-                      style: const TextStyle(
-                          color: AppTheme.primaryAction, fontSize: 10),
-                    ),
+    return InkWell(
+      onTap: () => _showActionsSheet(context, ref),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.productName,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      maxLines: 2),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$qtyStr × ${formatter.format(item.unitPrice)}',
+                    style: const TextStyle(
+                        color: AppTheme.textSecondary, fontSize: 12),
                   ),
-              ],
+                  if (item.category != null && item.category!.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryAction.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        _displayCategory(item.category),
+                        style: const TextStyle(
+                            color: AppTheme.primaryAction, fontSize: 10),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            formatter.format(item.totalPrice),
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Text(
+              formatter.format(item.totalPrice),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showActionsSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                item.productName,
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 15),
+                maxLines: 2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading:
+                  const Icon(Icons.notifications_rounded, color: Colors.amber),
+              title: const Text('Monitorar preço'),
+              subtitle: const Text('Em breve',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 11)),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Monitoramento disponível em breve!')));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.add_alert_rounded,
+                  color: AppTheme.primaryAction),
+              title: const Text('Criar alerta de preço'),
+              subtitle: const Text('Em breve',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 11)),
+              onTap: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Alertas disponíveis em breve!')));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.label_rounded,
+                  color: AppTheme.primaryAction),
+              title: const Text('Categorizar'),
+              subtitle: Text(
+                  item.category != null
+                      ? 'Atual: ${_displayCategory(item.category)}'
+                      : 'Sem categoria',
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 11)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showCategoryPicker(context, ref);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCategoryPicker(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Center(
+              child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2))),
+            ),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text('Selecionar categoria',
+                  style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _kCategories.map((cat) {
+                      final selected = item.category == cat;
+                      return FilterChip(
+                        label: Text(_displayCategory(cat)),
+                        selected: selected,
+                        onSelected: (_) async {
+                          Navigator.pop(ctx);
+                          try {
+                            await ref
+                                .read(receiptRepositoryProvider)
+                                .patchReceiptItemCategory(item.id, cat);
+                            ref.invalidate(receiptByIdProvider(receiptId));
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Erro ao salvar: $e'),
+                                    backgroundColor: Colors.redAccent),
+                              );
+                            }
+                          }
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }

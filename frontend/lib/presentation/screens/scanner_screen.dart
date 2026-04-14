@@ -218,49 +218,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
 
     final picker = ImagePicker();
-    final XFile? photo = await showModalBottomSheet<XFile?>(
-      context: context,
-      backgroundColor: AppTheme.cardColor,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            const Text('Foto do cupom fiscal',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_rounded,
-                  color: AppTheme.primaryAction),
-              title: const Text('Tirar foto agora'),
-              onTap: () async {
-                final f = await picker.pickImage(source: ImageSource.camera);
-                if (ctx.mounted) Navigator.pop(ctx, f);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_rounded,
-                  color: AppTheme.primaryAction),
-              title: const Text('Escolher da galeria'),
-              onTap: () async {
-                final f = await picker.pickImage(source: ImageSource.gallery);
-                if (ctx.mounted) Navigator.pop(ctx, f);
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
+    final XFile? photo = await picker.pickImage(source: ImageSource.gallery);
 
     if (photo == null || !mounted) return;
 
@@ -420,10 +378,10 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                       if (!kIsWeb)
                         TextButton.icon(
                           onPressed: _pickAndScanImage,
-                          icon: const Icon(Icons.camera_alt_rounded,
+                          icon: const Icon(Icons.photo_library_rounded,
                               color: Colors.white54, size: 16),
                           label: const Text(
-                            'Tirar foto',
+                            'Importar',
                             style: TextStyle(
                                 color: Colors.white54, fontSize: 13),
                           ),

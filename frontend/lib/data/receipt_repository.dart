@@ -28,6 +28,11 @@ abstract class ReceiptRepository {
   // Reporting
   Future<Uint8List> exportReceipts(
       {required String format, int? month, int? year});
+  Future<Uint8List> exportSingleReceipt(
+      {required int id, required String format});
+
+  // Item patch
+  Future<void> patchReceiptItemCategory(int itemId, String category);
 }
 
 /// Concrete implementation backed by the FastAPI backend.
@@ -143,6 +148,25 @@ class ApiReceiptRepository implements ReceiptRepository {
       options: Options(responseType: ResponseType.bytes),
     );
     return Uint8List.fromList(response.data as List<int>);
+  }
+
+  @override
+  Future<Uint8List> exportSingleReceipt(
+      {required int id, required String format}) async {
+    final response = await _dio.get(
+      '/receipts/$id/export',
+      queryParameters: {'format': format},
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return Uint8List.fromList(response.data as List<int>);
+  }
+
+  @override
+  Future<void> patchReceiptItemCategory(int itemId, String category) async {
+    await _dio.patch(
+      '/receipt-items/$itemId',
+      data: {'category': category},
+    );
   }
 }
 

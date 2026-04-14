@@ -34,6 +34,8 @@ class Receipt(Base):
     date = Column(DateTime, default=datetime.utcnow)
     total_amount = Column(Float)
     taxes = Column(Float, nullable=True)
+    tax_state = Column(Float, nullable=True)    # ICMS (estadual)
+    tax_federal = Column(Float, nullable=True)  # PIS + COFINS (federal)
     qr_data = Column(Text, nullable=True)  # Raw URL or data from QR code
     access_key = Column(String, unique=True, index=True, nullable=True) # Chave de acesso NFC-e
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)

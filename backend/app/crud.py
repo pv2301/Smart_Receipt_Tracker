@@ -124,6 +124,16 @@ def delete_receipt(db: Session, receipt_id: int) -> bool:
     db.commit()
     return True
 
+def patch_receipt_item(db: Session, item_id: int, patch: schemas.ReceiptItemPatch):
+    item = db.query(models.ReceiptItem).filter(models.ReceiptItem.id == item_id).first()
+    if item is None:
+        return None
+    if patch.category is not None:
+        item.category = patch.category
+    db.commit()
+    db.refresh(item)
+    return item
+
 def delete_all_receipts(db: Session, user_id: int = 1) -> int:
     """Deleta todos os recibos do usuário. Retorna a quantidade removida."""
     count = db.query(models.Receipt).filter(models.Receipt.owner_id == user_id).count()
@@ -143,6 +153,8 @@ def create_receipt(db: Session, receipt: schemas.ReceiptCreate):
         date=receipt.date,
         total_amount=receipt.total_amount,
         taxes=receipt.taxes,
+        tax_state=receipt.tax_state,
+        tax_federal=receipt.tax_federal,
         qr_data=receipt.qr_data,
         access_key=receipt.access_key,
         owner_id=user.id
@@ -263,6 +275,11 @@ def _try_parse_xml(content: bytes, qr_url: str, access_key: str) -> schemas.Rece
     icms = inf.find('.//nfe:ICMSTot', _NFE_NS)
     total_amount = float(_xml_text(icms, 'nfe:vNF') or 0) if icms else sum(i.total_price for i in items)
     taxes = float(_xml_text(icms, 'nfe:vTotTrib') or 0) if icms else 0.0
+    tax_state = float(_xml_text(icms, 'nfe:vICMS') or 0) if icms else 0.0
+    tax_federal = (
+        float(_xml_text(icms, 'nfe:vPIS') or 0) +
+        float(_xml_text(icms, 'nfe:vCOFINS') or 0)
+    ) if icms else 0.0
 
     return schemas.ReceiptCreate(
         store_name=store_name,
@@ -270,6 +287,8 @@ def _try_parse_xml(content: bytes, qr_url: str, access_key: str) -> schemas.Rece
         date=date,
         total_amount=total_amount,
         taxes=taxes,
+        tax_state=tax_state if tax_state > 0 else None,
+        tax_federal=tax_federal if tax_federal > 0 else None,
         qr_data=qr_url,
         access_key=access_key,
         items=items,

@@ -48,6 +48,9 @@ class BudgetStatusResponse(BaseModel):
     remaining: float
     percent_used: float
 
+class ReceiptItemPatch(BaseModel):
+    category: Optional[str] = None
+
 class ReceiptItemBase(BaseModel):
     product_name: str
     product_code: Optional[str] = None
@@ -72,6 +75,8 @@ class ReceiptBase(BaseModel):
     date: datetime
     total_amount: float
     taxes: Optional[float] = None
+    tax_state: Optional[float] = None
+    tax_federal: Optional[float] = None
     qr_data: Optional[str] = None
     access_key: Optional[str] = None
 

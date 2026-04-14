@@ -296,7 +296,7 @@ as String?,
 /// @nodoc
 mixin _$Receipt {
 
- int get id;@JsonKey(name: 'store_name') String get storeName;@JsonKey(name: 'merchant_id') String? get merchantId; DateTime get date;@JsonKey(name: 'total_amount') double get totalAmount; double? get taxes;@JsonKey(name: 'qr_data') String? get qrData;@JsonKey(name: 'access_key') String? get accessKey; List<ReceiptItem> get items;
+ int get id;@JsonKey(name: 'store_name') String get storeName;@JsonKey(name: 'merchant_id') String? get merchantId; DateTime get date;@JsonKey(name: 'total_amount') double get totalAmount; double? get taxes;@JsonKey(name: 'tax_state') double? get taxState;@JsonKey(name: 'tax_federal') double? get taxFederal;@JsonKey(name: 'qr_data') String? get qrData;@JsonKey(name: 'access_key') String? get accessKey; List<ReceiptItem> get items;
 /// Create a copy of Receipt
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -309,16 +309,16 @@ $ReceiptCopyWith<Receipt> get copyWith => _$ReceiptCopyWithImpl<Receipt>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Receipt&&(identical(other.id, id) || other.id == id)&&(identical(other.storeName, storeName) || other.storeName == storeName)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.date, date) || other.date == date)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.taxes, taxes) || other.taxes == taxes)&&(identical(other.qrData, qrData) || other.qrData == qrData)&&(identical(other.accessKey, accessKey) || other.accessKey == accessKey)&&const DeepCollectionEquality().equals(other.items, items));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Receipt&&(identical(other.id, id) || other.id == id)&&(identical(other.storeName, storeName) || other.storeName == storeName)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.date, date) || other.date == date)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.taxes, taxes) || other.taxes == taxes)&&(identical(other.taxState, taxState) || other.taxState == taxState)&&(identical(other.taxFederal, taxFederal) || other.taxFederal == taxFederal)&&(identical(other.qrData, qrData) || other.qrData == qrData)&&(identical(other.accessKey, accessKey) || other.accessKey == accessKey)&&const DeepCollectionEquality().equals(other.items, items));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,storeName,merchantId,date,totalAmount,taxes,qrData,accessKey,const DeepCollectionEquality().hash(items));
+int get hashCode => Object.hash(runtimeType,id,storeName,merchantId,date,totalAmount,taxes,taxState,taxFederal,qrData,accessKey,const DeepCollectionEquality().hash(items));
 
 @override
 String toString() {
-  return 'Receipt(id: $id, storeName: $storeName, merchantId: $merchantId, date: $date, totalAmount: $totalAmount, taxes: $taxes, qrData: $qrData, accessKey: $accessKey, items: $items)';
+  return 'Receipt(id: $id, storeName: $storeName, merchantId: $merchantId, date: $date, totalAmount: $totalAmount, taxes: $taxes, taxState: $taxState, taxFederal: $taxFederal, qrData: $qrData, accessKey: $accessKey, items: $items)';
 }
 
 
@@ -329,7 +329,7 @@ abstract mixin class $ReceiptCopyWith<$Res>  {
   factory $ReceiptCopyWith(Receipt value, $Res Function(Receipt) _then) = _$ReceiptCopyWithImpl;
 @useResult
 $Res call({
- int id,@JsonKey(name: 'store_name') String storeName,@JsonKey(name: 'merchant_id') String? merchantId, DateTime date,@JsonKey(name: 'total_amount') double totalAmount, double? taxes,@JsonKey(name: 'qr_data') String? qrData,@JsonKey(name: 'access_key') String? accessKey, List<ReceiptItem> items
+ int id,@JsonKey(name: 'store_name') String storeName,@JsonKey(name: 'merchant_id') String? merchantId, DateTime date,@JsonKey(name: 'total_amount') double totalAmount, double? taxes,@JsonKey(name: 'tax_state') double? taxState,@JsonKey(name: 'tax_federal') double? taxFederal,@JsonKey(name: 'qr_data') String? qrData,@JsonKey(name: 'access_key') String? accessKey, List<ReceiptItem> items
 });
 
 
@@ -346,7 +346,7 @@ class _$ReceiptCopyWithImpl<$Res>
 
 /// Create a copy of Receipt
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? storeName = null,Object? merchantId = freezed,Object? date = null,Object? totalAmount = null,Object? taxes = freezed,Object? qrData = freezed,Object? accessKey = freezed,Object? items = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? storeName = null,Object? merchantId = freezed,Object? date = null,Object? totalAmount = null,Object? taxes = freezed,Object? taxState = freezed,Object? taxFederal = freezed,Object? qrData = freezed,Object? accessKey = freezed,Object? items = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,storeName: null == storeName ? _self.storeName : storeName // ignore: cast_nullable_to_non_nullable
@@ -354,6 +354,8 @@ as String,merchantId: freezed == merchantId ? _self.merchantId : merchantId // i
 as String?,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ignore: cast_nullable_to_non_nullable
 as double,taxes: freezed == taxes ? _self.taxes : taxes // ignore: cast_nullable_to_non_nullable
+as double?,taxState: freezed == taxState ? _self.taxState : taxState // ignore: cast_nullable_to_non_nullable
+as double?,taxFederal: freezed == taxFederal ? _self.taxFederal : taxFederal // ignore: cast_nullable_to_non_nullable
 as double?,qrData: freezed == qrData ? _self.qrData : qrData // ignore: cast_nullable_to_non_nullable
 as String?,accessKey: freezed == accessKey ? _self.accessKey : accessKey // ignore: cast_nullable_to_non_nullable
 as String?,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
@@ -442,10 +444,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'tax_state')  double? taxState, @JsonKey(name: 'tax_federal')  double? taxFederal, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Receipt() when $default != null:
-return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.qrData,_that.accessKey,_that.items);case _:
+return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.taxState,_that.taxFederal,_that.qrData,_that.accessKey,_that.items);case _:
   return orElse();
 
 }
@@ -463,10 +465,10 @@ return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.total
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'tax_state')  double? taxState, @JsonKey(name: 'tax_federal')  double? taxFederal, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)  $default,) {final _that = this;
 switch (_that) {
 case _Receipt():
-return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.qrData,_that.accessKey,_that.items);case _:
+return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.taxState,_that.taxFederal,_that.qrData,_that.accessKey,_that.items);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -483,10 +485,10 @@ return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.total
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id, @JsonKey(name: 'store_name')  String storeName, @JsonKey(name: 'merchant_id')  String? merchantId,  DateTime date, @JsonKey(name: 'total_amount')  double totalAmount,  double? taxes, @JsonKey(name: 'tax_state')  double? taxState, @JsonKey(name: 'tax_federal')  double? taxFederal, @JsonKey(name: 'qr_data')  String? qrData, @JsonKey(name: 'access_key')  String? accessKey,  List<ReceiptItem> items)?  $default,) {final _that = this;
 switch (_that) {
 case _Receipt() when $default != null:
-return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.qrData,_that.accessKey,_that.items);case _:
+return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.totalAmount,_that.taxes,_that.taxState,_that.taxFederal,_that.qrData,_that.accessKey,_that.items);case _:
   return null;
 
 }
@@ -498,7 +500,7 @@ return $default(_that.id,_that.storeName,_that.merchantId,_that.date,_that.total
 @JsonSerializable()
 
 class _Receipt implements Receipt {
-  const _Receipt({required this.id, @JsonKey(name: 'store_name') required this.storeName, @JsonKey(name: 'merchant_id') this.merchantId, required this.date, @JsonKey(name: 'total_amount') required this.totalAmount, this.taxes, @JsonKey(name: 'qr_data') this.qrData, @JsonKey(name: 'access_key') this.accessKey, final  List<ReceiptItem> items = const []}): _items = items;
+  const _Receipt({required this.id, @JsonKey(name: 'store_name') required this.storeName, @JsonKey(name: 'merchant_id') this.merchantId, required this.date, @JsonKey(name: 'total_amount') required this.totalAmount, this.taxes, @JsonKey(name: 'tax_state') this.taxState, @JsonKey(name: 'tax_federal') this.taxFederal, @JsonKey(name: 'qr_data') this.qrData, @JsonKey(name: 'access_key') this.accessKey, final  List<ReceiptItem> items = const []}): _items = items;
   factory _Receipt.fromJson(Map<String, dynamic> json) => _$ReceiptFromJson(json);
 
 @override final  int id;
@@ -507,6 +509,8 @@ class _Receipt implements Receipt {
 @override final  DateTime date;
 @override@JsonKey(name: 'total_amount') final  double totalAmount;
 @override final  double? taxes;
+@override@JsonKey(name: 'tax_state') final  double? taxState;
+@override@JsonKey(name: 'tax_federal') final  double? taxFederal;
 @override@JsonKey(name: 'qr_data') final  String? qrData;
 @override@JsonKey(name: 'access_key') final  String? accessKey;
  final  List<ReceiptItem> _items;
@@ -530,16 +534,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Receipt&&(identical(other.id, id) || other.id == id)&&(identical(other.storeName, storeName) || other.storeName == storeName)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.date, date) || other.date == date)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.taxes, taxes) || other.taxes == taxes)&&(identical(other.qrData, qrData) || other.qrData == qrData)&&(identical(other.accessKey, accessKey) || other.accessKey == accessKey)&&const DeepCollectionEquality().equals(other._items, _items));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Receipt&&(identical(other.id, id) || other.id == id)&&(identical(other.storeName, storeName) || other.storeName == storeName)&&(identical(other.merchantId, merchantId) || other.merchantId == merchantId)&&(identical(other.date, date) || other.date == date)&&(identical(other.totalAmount, totalAmount) || other.totalAmount == totalAmount)&&(identical(other.taxes, taxes) || other.taxes == taxes)&&(identical(other.taxState, taxState) || other.taxState == taxState)&&(identical(other.taxFederal, taxFederal) || other.taxFederal == taxFederal)&&(identical(other.qrData, qrData) || other.qrData == qrData)&&(identical(other.accessKey, accessKey) || other.accessKey == accessKey)&&const DeepCollectionEquality().equals(other._items, _items));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,storeName,merchantId,date,totalAmount,taxes,qrData,accessKey,const DeepCollectionEquality().hash(_items));
+int get hashCode => Object.hash(runtimeType,id,storeName,merchantId,date,totalAmount,taxes,taxState,taxFederal,qrData,accessKey,const DeepCollectionEquality().hash(_items));
 
 @override
 String toString() {
-  return 'Receipt(id: $id, storeName: $storeName, merchantId: $merchantId, date: $date, totalAmount: $totalAmount, taxes: $taxes, qrData: $qrData, accessKey: $accessKey, items: $items)';
+  return 'Receipt(id: $id, storeName: $storeName, merchantId: $merchantId, date: $date, totalAmount: $totalAmount, taxes: $taxes, taxState: $taxState, taxFederal: $taxFederal, qrData: $qrData, accessKey: $accessKey, items: $items)';
 }
 
 
@@ -550,7 +554,7 @@ abstract mixin class _$ReceiptCopyWith<$Res> implements $ReceiptCopyWith<$Res> {
   factory _$ReceiptCopyWith(_Receipt value, $Res Function(_Receipt) _then) = __$ReceiptCopyWithImpl;
 @override @useResult
 $Res call({
- int id,@JsonKey(name: 'store_name') String storeName,@JsonKey(name: 'merchant_id') String? merchantId, DateTime date,@JsonKey(name: 'total_amount') double totalAmount, double? taxes,@JsonKey(name: 'qr_data') String? qrData,@JsonKey(name: 'access_key') String? accessKey, List<ReceiptItem> items
+ int id,@JsonKey(name: 'store_name') String storeName,@JsonKey(name: 'merchant_id') String? merchantId, DateTime date,@JsonKey(name: 'total_amount') double totalAmount, double? taxes,@JsonKey(name: 'tax_state') double? taxState,@JsonKey(name: 'tax_federal') double? taxFederal,@JsonKey(name: 'qr_data') String? qrData,@JsonKey(name: 'access_key') String? accessKey, List<ReceiptItem> items
 });
 
 
@@ -567,7 +571,7 @@ class __$ReceiptCopyWithImpl<$Res>
 
 /// Create a copy of Receipt
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? storeName = null,Object? merchantId = freezed,Object? date = null,Object? totalAmount = null,Object? taxes = freezed,Object? qrData = freezed,Object? accessKey = freezed,Object? items = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? storeName = null,Object? merchantId = freezed,Object? date = null,Object? totalAmount = null,Object? taxes = freezed,Object? taxState = freezed,Object? taxFederal = freezed,Object? qrData = freezed,Object? accessKey = freezed,Object? items = null,}) {
   return _then(_Receipt(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,storeName: null == storeName ? _self.storeName : storeName // ignore: cast_nullable_to_non_nullable
@@ -575,6 +579,8 @@ as String,merchantId: freezed == merchantId ? _self.merchantId : merchantId // i
 as String?,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,totalAmount: null == totalAmount ? _self.totalAmount : totalAmount // ignore: cast_nullable_to_non_nullable
 as double,taxes: freezed == taxes ? _self.taxes : taxes // ignore: cast_nullable_to_non_nullable
+as double?,taxState: freezed == taxState ? _self.taxState : taxState // ignore: cast_nullable_to_non_nullable
+as double?,taxFederal: freezed == taxFederal ? _self.taxFederal : taxFederal // ignore: cast_nullable_to_non_nullable
 as double?,qrData: freezed == qrData ? _self.qrData : qrData // ignore: cast_nullable_to_non_nullable
 as String?,accessKey: freezed == accessKey ? _self.accessKey : accessKey // ignore: cast_nullable_to_non_nullable
 as String?,items: null == items ? _self._items : items // ignore: cast_nullable_to_non_nullable

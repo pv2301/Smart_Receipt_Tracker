@@ -132,9 +132,13 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
                 data: (suggestions) {
                   final visible = suggestions
                       .where((s) => !_dismissed.contains(s.productName))
-                      .where((s) =>
-                          _selectedCategory == 'Todos' ||
-                          s.category == _selectedCategory)
+                      .where((s) {
+                        if (_selectedCategory == 'Todos') return true;
+                        final cat = s.category;
+                        // "Alimentos" cobre todas as subcategorias "Alimentos/X"
+                        return cat == _selectedCategory ||
+                            cat.startsWith('$_selectedCategory/');
+                      })
                       .toList();
 
                   if (visible.isEmpty) {
