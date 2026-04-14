@@ -20,6 +20,13 @@
     <!-- Internet: para chamar a API -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Galeria de fotos: para image_picker (OCR de cupom) -->
+    <!-- Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- Android ≤ 12 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
     <application
         android:label="Notinha"
         android:name="${applicationName}"

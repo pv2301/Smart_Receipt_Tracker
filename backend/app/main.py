@@ -102,6 +102,24 @@ def delete_receipt(receipt_id: int, db: Session = Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="Receipt not found")
 
+@app.delete("/receipts/", status_code=200)
+def delete_all_receipts(db: Session = Depends(get_db)):
+    """Apaga todos os recibos do usuário padrão."""
+    count = crud.delete_all_receipts(db)
+    return {"deleted": count}
+
+@app.post("/receipts/ocr", response_model=schemas.Receipt)
+def scan_receipt_ocr(req: schemas.OcrScanRequest, db: Session = Depends(get_db)):
+    """
+    Recebe texto extraído por OCR de um cupom impresso,
+    parseia e salva como recibo.
+    """
+    try:
+        receipt_in = crud.parse_receipt_from_ocr_text(req.text)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Falha ao parsear OCR: {str(e)}")
+    return crud.create_receipt(db=db, receipt=receipt_in)
+
 @app.get("/suggestions", response_model=List[schemas.SuggestionResponse])
 def get_shopping_suggestions(categories: Optional[List[str]] = Query(None), db: Session = Depends(get_db)):
     """

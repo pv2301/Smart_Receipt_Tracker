@@ -20,6 +20,10 @@ abstract class ReceiptRepository {
 
   // Deletion
   Future<void> deleteReceipt(int id);
+  Future<int> clearAllReceipts();
+
+  // OCR
+  Future<Receipt> scanReceiptOcr(String ocrText);
 
   // Reporting
   Future<Uint8List> exportReceipts(
@@ -109,6 +113,21 @@ class ApiReceiptRepository implements ReceiptRepository {
   @override
   Future<void> deleteReceipt(int id) async {
     await _dio.delete('/receipts/$id');
+  }
+
+  @override
+  Future<int> clearAllReceipts() async {
+    final response = await _dio.delete('/receipts/');
+    return (response.data['deleted'] as int?) ?? 0;
+  }
+
+  @override
+  Future<Receipt> scanReceiptOcr(String ocrText) async {
+    final response = await _dio.post(
+      '/receipts/ocr',
+      data: {'text': ocrText},
+    );
+    return Receipt.fromJson(response.data as Map<String, dynamic>);
   }
 
   @override

@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../providers/settings_provider.dart';
+import '../../data/receipt_repository.dart';
 
 // ── SEFAZ state detection (mirrors backend sefaz_registry.py) ────────────────
 
@@ -202,6 +206,101 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     }
   }
 
+  Future<void> _pickAndScanImage() async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OCR disponível apenas no app móvel'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    final picker = ImagePicker();
+    final XFile? photo = await showModalBottomSheet<XFile?>(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            const Text('Foto do cupom fiscal',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded,
+                  color: AppTheme.primaryAction),
+              title: const Text('Tirar foto agora'),
+              onTap: () async {
+                final f = await picker.pickImage(source: ImageSource.camera);
+                if (ctx.mounted) Navigator.pop(ctx, f);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded,
+                  color: AppTheme.primaryAction),
+              title: const Text('Escolher da galeria'),
+              onTap: () async {
+                final f = await picker.pickImage(source: ImageSource.gallery);
+                if (ctx.mounted) Navigator.pop(ctx, f);
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+
+    if (photo == null || !mounted) return;
+
+    setState(() => _hasScanned = true);
+    _controller.stop();
+
+    // Show processing state
+    ref.read(scanReceiptProvider.notifier).startLoading();
+
+    try {
+      // Run MLKit text recognition on device
+      final inputImage = InputImage.fromFilePath(photo.path);
+      final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+      final RecognizedText recognized = await recognizer.processImage(inputImage);
+      recognizer.close();
+
+      final extractedText = recognized.text;
+      if (extractedText.trim().isEmpty) {
+        throw Exception('Nenhum texto encontrado na imagem');
+      }
+
+      // Send extracted text to backend for parsing
+      final repo = ref.read(receiptRepositoryProvider);
+      final receipt = await repo.scanReceiptOcr(extractedText);
+
+      ref.read(scanReceiptProvider.notifier).setSuccess(receipt);
+      ref.invalidate(receiptsProvider);
+
+      if (mounted) {
+        context.pushReplacement('/receipt/${receipt.id}');
+      }
+    } catch (e) {
+      ref.read(scanReceiptProvider.notifier).setError(e.toString());
+      if (mounted) {
+        setState(() => _hasScanned = false);
+        _controller.start();
+      }
+    }
+  }
+
   void _showManualUrlDialog() {
     final controller = TextEditingController();
     showDialog<void>(
@@ -301,17 +400,35 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
                     color: Colors.white70,
                   ),
 
-                // Mode 2: manual URL entry
+                // Mode 2 + Mode 3 buttons
                 if (scanState.state != ScanState.loading) ...[
                   const SizedBox(height: 16),
-                  TextButton.icon(
-                    onPressed: _showManualUrlDialog,
-                    icon: const Icon(Icons.keyboard_rounded,
-                        color: Colors.white54, size: 16),
-                    label: const Text(
-                      'Digitar link',
-                      style: TextStyle(color: Colors.white54, fontSize: 13),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton.icon(
+                        onPressed: _showManualUrlDialog,
+                        icon: const Icon(Icons.keyboard_rounded,
+                            color: Colors.white54, size: 16),
+                        label: const Text(
+                          'Digitar link',
+                          style:
+                              TextStyle(color: Colors.white54, fontSize: 13),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (!kIsWeb)
+                        TextButton.icon(
+                          onPressed: _pickAndScanImage,
+                          icon: const Icon(Icons.camera_alt_rounded,
+                              color: Colors.white54, size: 16),
+                          label: const Text(
+                            'Tirar foto',
+                            style: TextStyle(
+                                color: Colors.white54, fontSize: 13),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ],

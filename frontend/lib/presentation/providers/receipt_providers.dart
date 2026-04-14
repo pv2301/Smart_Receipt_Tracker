@@ -76,6 +76,15 @@ class ScanReceiptNotifier extends Notifier<ScanResult> {
     }
   }
 
+  void startLoading() =>
+      state = const ScanResult(state: ScanState.loading);
+
+  void setSuccess(Receipt receipt) =>
+      state = ScanResult(state: ScanState.success, receipt: receipt);
+
+  void setError(String message) =>
+      state = ScanResult(state: ScanState.error, errorMessage: message);
+
   void reset() => state = const ScanResult.idle();
 }
 

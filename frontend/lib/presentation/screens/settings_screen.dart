@@ -396,11 +396,26 @@ class _DataSection extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    // TODO Sprint 3: implementar DELETE /api/receipts/all no backend
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Funcionalidade em breve')),
-      );
+    try {
+      final count = await ref.read(receiptRepositoryProvider).clearAllReceipts();
+      ref.invalidate(receiptsProvider);
+      ref.invalidate(budgetStatusProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                count == 1 ? '1 recibo apagado.' : '$count recibos apagados.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Erro ao limpar: $e'),
+              backgroundColor: Colors.redAccent),
+        );
+      }
     }
   }
 }

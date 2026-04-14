@@ -124,6 +124,13 @@ def delete_receipt(db: Session, receipt_id: int) -> bool:
     db.commit()
     return True
 
+def delete_all_receipts(db: Session, user_id: int = 1) -> int:
+    """Deleta todos os recibos do usuário. Retorna a quantidade removida."""
+    count = db.query(models.Receipt).filter(models.Receipt.owner_id == user_id).count()
+    db.query(models.Receipt).filter(models.Receipt.owner_id == user_id).delete()
+    db.commit()
+    return count
+
 def get_receipts(db: Session, skip: int = 0, limit: int = 100):
     user = get_user(db)
     return db.query(models.Receipt).filter(models.Receipt.owner_id == user.id).offset(skip).limit(limit).all()
@@ -415,6 +422,121 @@ def _fallback_receipt(qr_url: str, access_key: str) -> schemas.ReceiptCreate:
             total_price=0.0,
             category='outros',
         )],
+    )
+
+
+def parse_receipt_from_ocr_text(text: str) -> schemas.ReceiptCreate:
+    """
+    Parseia texto livre extraído por OCR de um cupom fiscal impresso.
+    Tenta extrair: nome da loja, CNPJ, data, itens e total.
+    Funciona com o layout padrão DANFE NFC-e / SAT-CF-e impresso.
+    """
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+
+    # ── Nome da loja ─────────────────────────────────────────────────────────
+    # Geralmente as primeiras linhas não-vazias antes do CNPJ
+    store_name = 'Loja Desconhecida'
+    for i, line in enumerate(lines[:6]):
+        if len(line) > 3 and not re.search(r'\d{2}[./]\d{3}', line):
+            store_name = line
+            break
+
+    # ── CNPJ ────────────────────────────────────────────────────────────────
+    cnpj = ''
+    cnpj_m = re.search(
+        r'(\d{2}[\.\s]?\d{3}[\.\s]?\d{3}[/\s]?\d{4}[-\s]?\d{2})', text
+    )
+    if cnpj_m:
+        cnpj = cnpj_m.group(1)
+
+    # ── Data ────────────────────────────────────────────────────────────────
+    date = datetime.utcnow()
+    date_m = re.search(r'(\d{2})/(\d{2})/(\d{4})', text)
+    if date_m:
+        try:
+            date = datetime(
+                int(date_m.group(3)), int(date_m.group(2)), int(date_m.group(1))
+            )
+        except Exception:
+            pass
+
+    # ── Itens ────────────────────────────────────────────────────────────────
+    # Padrão: "PRODUTO QTD x UN PRECO TOTAL"
+    # Ex: "ARROZ 5KG      2 UN x 12,90     25,80"
+    # Ex: "FEIJAO CARIOCA 1 KG 8,50 8,50"
+    raw_items: list[dict] = []
+    item_pattern = re.compile(
+        r'^(?P<name>[A-Za-zÀ-ú][A-Za-zÀ-ú0-9\s\-\.%/]{2,40?}?)'
+        r'\s+(?P<qty>\d+[,.]?\d*)\s*(?:un|kg|lt|pc|cx|g|ml|pç)?\s*'
+        r'(?:[xX*×]\s*)?(?P<unit>[\d.,]+)\s+(?P<total>[\d.,]+)',
+        re.IGNORECASE,
+    )
+    for line in lines:
+        m = item_pattern.match(line)
+        if m:
+            name = m.group('name').strip()
+            qty = _br_float(m.group('qty'))
+            unit_price = _br_float(m.group('unit'))
+            total_price = _br_float(m.group('total'))
+            if name and total_price > 0:
+                raw_items.append({
+                    'product_name': name,
+                    'quantity': qty or 1.0,
+                    'unit_price': unit_price,
+                    'total_price': total_price,
+                })
+
+    # Fallback: linhas com preço no final (ex: "AGUA MINERAL 500ML  3,99")
+    if not raw_items:
+        price_line = re.compile(
+            r'^(?P<name>[A-Za-zÀ-ú][A-Za-zÀ-ú0-9\s\-\.%/]{2,40})\s+(?P<price>[\d]{1,5}[,.][\d]{2})\s*$',
+            re.IGNORECASE,
+        )
+        for line in lines:
+            m = price_line.match(line)
+            if m:
+                name = m.group('name').strip()
+                price = _br_float(m.group('price'))
+                if name and price > 0:
+                    raw_items.append({
+                        'product_name': name,
+                        'quantity': 1.0,
+                        'unit_price': price,
+                        'total_price': price,
+                    })
+
+    items = _build_items(raw_items) if raw_items else [
+        schemas.ReceiptItemCreate(
+            product_name='[OCR: itens não identificados]',
+            quantity=1, unit_price=0.0, total_price=0.0, category='outros',
+        )
+    ]
+
+    # ── Total ────────────────────────────────────────────────────────────────
+    total_amount = sum(i.total_price for i in items)
+    total_patterns = [
+        r'total\s+r?\$?\s*([\d.,]+)',
+        r'valor total\s*:?\s*([\d.,]+)',
+        r'total a pagar\s*:?\s*([\d.,]+)',
+        r'(?:^|\s)total\s+([\d]{1,5}[,.][\d]{2})',
+    ]
+    for pat in total_patterns:
+        m = re.search(pat, text, re.IGNORECASE)
+        if m:
+            parsed = _br_float(m.group(1))
+            if parsed > 0:
+                total_amount = parsed
+                break
+
+    return schemas.ReceiptCreate(
+        store_name=store_name,
+        merchant_id=cnpj,
+        date=date,
+        total_amount=total_amount,
+        taxes=0.0,
+        qr_data=None,
+        access_key=None,
+        items=items,
     )
 
 

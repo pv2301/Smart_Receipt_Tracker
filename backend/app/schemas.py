@@ -32,6 +32,9 @@ class MonthlyGoal(MonthlyGoalBase):
     class Config:
         from_attributes = True
 
+class OcrScanRequest(BaseModel):
+    text: str
+
 class UserBudgetUpdate(BaseModel):
     default_budget: float
     is_budget_fixed: bool
