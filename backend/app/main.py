@@ -14,6 +14,22 @@ except Exception as _db_init_err:
     import logging
     logging.warning(f"[startup] create_all falhou: {_db_init_err}")
 
+# Migrações incrementais: adiciona colunas novas sem derrubar tabelas existentes.
+# ADD COLUMN IF NOT EXISTS é idempotente — seguro rodar toda vez.
+try:
+    from sqlalchemy import text
+    with engine.connect() as _conn:
+        _conn.execute(text(
+            "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS tax_state FLOAT"
+        ))
+        _conn.execute(text(
+            "ALTER TABLE receipts ADD COLUMN IF NOT EXISTS tax_federal FLOAT"
+        ))
+        _conn.commit()
+except Exception as _migration_err:
+    import logging
+    logging.warning(f"[startup] migração incremental falhou: {_migration_err}")
+
 app = FastAPI(title="Notinha")
 
 # Configure CORS for Flutter Web
