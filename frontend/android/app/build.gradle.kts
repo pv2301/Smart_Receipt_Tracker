@@ -45,7 +45,7 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools.desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 // AGP 8.11.1 não reconhece o variant de desugar_jdk_libs declarado no AAR
