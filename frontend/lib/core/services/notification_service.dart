@@ -98,10 +98,10 @@ class NotificationService {
     );
 
     await _notificationsPlugin.show(
-      id,
-      title,
-      body,
-      platformChannelSpecifics,
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: platformChannelSpecifics,
     );
   }
 
@@ -132,11 +132,11 @@ class NotificationService {
     );
 
     await _notificationsPlugin.zonedSchedule(
-      id,
-      'Planeje suas Compras 🛒',
-      'Confira os itens que estão acabando na sua Lista Inteligente.',
-      _nextInstanceOfTime(hour, minute),
-      platformChannelSpecifics,
+      id: id,
+      title: 'Planeje suas Compras 🛒',
+      body: 'Confira os itens que estão acabando na sua Lista Inteligente.',
+      scheduledDate: _nextInstanceOfTime(hour, minute),
+      notificationDetails: platformChannelSpecifics,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
@@ -145,7 +145,7 @@ class NotificationService {
   /// Cancela uma notificação agendada pelo id
   Future<void> cancelNotification(int id) async {
     if (kIsWeb) return;
-    await _notificationsPlugin.cancel(id);
+    await _notificationsPlugin.cancel(id: id);
   }
 
   tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
