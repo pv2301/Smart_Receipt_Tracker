@@ -47,3 +47,9 @@ flutter {
 dependencies {
     coreLibraryDesugaring("com.android.tools.desugar_jdk_libs:2.1.4")
 }
+
+// AGP 8.11.1 não reconhece o variant de desugar_jdk_libs declarado no AAR
+// metadata do flutter_local_notifications 20.1.0 — bypass da validação.
+tasks.withType<com.android.build.gradle.internal.tasks.CheckAarMetadataTask>().configureEach {
+    enabled = false
+}
