@@ -59,7 +59,7 @@ def set_monthly_goal(goal: schemas.MonthlyGoalCreate, db: Session = Depends(get_
 
 @app.get("/receipts/export")
 def export_receipts(
-    format: str = Query("pdf", regex="^(pdf|excel)$"),
+    format: str = Query("pdf", pattern="^(pdf|excel)$"),
     month: int = Query(datetime.now().month),
     year: int = Query(datetime.now().year),
     db: Session = Depends(get_db)
