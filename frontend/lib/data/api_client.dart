@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// URL de produção do backend no Vercel.
-const _kProductionApiUrl = 'https://notinha.vercel.app/api';
+const _kProductionApiUrl = 'https://notinhasmart.vercel.app/api';
 
 /// Base URL for the FastAPI backend.
 /// Web: detecta host para distinguir local dev / produção.
