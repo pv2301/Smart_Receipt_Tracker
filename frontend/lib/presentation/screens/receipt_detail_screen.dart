@@ -10,9 +10,8 @@ import '../providers/receipt_providers.dart';
 import '../../data/receipt_repository.dart';
 import '../../domain/entities/receipt.dart';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-/// Exibe "Alim. Frios" para "Alimentos/Frios", ou a categoria inteira se não houver subcategoria.
 String _displayCategory(String? cat) {
   if (cat == null || cat.isEmpty) return '';
   final parts = cat.split('/');
@@ -23,51 +22,145 @@ String _displayCategory(String? cat) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-class ReceiptDetailScreen extends ConsumerWidget {
+class ReceiptDetailScreen extends ConsumerStatefulWidget {
   final int receiptId;
-  const ReceiptDetailScreen({super.key, required this.receiptId});
+
+  /// IDs de todos os recibos da lista de histórico, para swipe entre eles.
+  /// Quando null, a tela exibe apenas o recibo informado sem navegação por swipe.
+  final List<int>? allIds;
+
+  const ReceiptDetailScreen({
+    super.key,
+    required this.receiptId,
+    this.allIds,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final receiptAsync = ref.watch(receiptByIdProvider(receiptId));
+  ConsumerState<ReceiptDetailScreen> createState() =>
+      _ReceiptDetailScreenState();
+}
 
-    return receiptAsync.when(
-      loading: () => Scaffold(
-        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: const Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryAction)),
-      ),
-      error: (err, _) => Scaffold(
-        appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: Center(
-          child: Text('Erro ao carregar: $err',
-              style: const TextStyle(color: AppTheme.textSecondary)),
-        ),
-      ),
-      data: (receipt) => Scaffold(
-        appBar: AppBar(
-          title: const Text('Detalhe do Recibo',
-              style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.share_rounded),
-              tooltip: 'Compartilhar / Exportar',
-              onPressed: () => _showShareSheet(context, ref, receipt),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline_rounded,
-                  color: Colors.redAccent),
-              tooltip: 'Apagar recibo',
-              onPressed: () => _confirmDelete(context, ref, receipt),
-            ),
+class _ReceiptDetailScreenState extends ConsumerState<ReceiptDetailScreen> {
+  late final PageController _pageCtrl;
+  late final List<int> _ids;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _ids = widget.allIds ?? [widget.receiptId];
+    _currentIndex = _ids.indexOf(widget.receiptId);
+    if (_currentIndex < 0) _currentIndex = 0;
+    _pageCtrl = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Watch the current receipt purely for the AppBar actions
+    final currentId = _ids[_currentIndex];
+    final currentReceipt = ref.watch(receiptByIdProvider(currentId)).asData?.value;
+    final hasPrev = _currentIndex > 0;
+    final hasNext = _currentIndex < _ids.length - 1;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Detalhe do Recibo',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            if (_ids.length > 1)
+              Text(
+                '${_currentIndex + 1} / ${_ids.length}',
+                style: const TextStyle(
+                    fontSize: 11, color: AppTheme.textSecondary),
+              ),
           ],
         ),
-        body: _ReceiptDetailContent(receipt: receipt, receiptId: receiptId),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: currentReceipt == null
+            ? []
+            : [
+                IconButton(
+                  icon: const Icon(Icons.share_rounded),
+                  tooltip: 'Compartilhar / Exportar',
+                  onPressed: () =>
+                      _showShareSheet(context, ref, currentReceipt),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded,
+                      color: Colors.redAccent),
+                  tooltip: 'Apagar recibo',
+                  onPressed: () =>
+                      _confirmDelete(context, ref, currentReceipt),
+                ),
+              ],
+      ),
+      body: Stack(
+        children: [
+          // ── PageView — swipe horizontal entre recibos ──
+          PageView.builder(
+            controller: _pageCtrl,
+            itemCount: _ids.length,
+            onPageChanged: (i) => setState(() => _currentIndex = i),
+            itemBuilder: (context, index) {
+              final idAtIndex = _ids[index];
+              final asyncAtIndex = ref.watch(receiptByIdProvider(idAtIndex));
+              return asyncAtIndex.when(
+                loading: () => const Center(
+                    child: CircularProgressIndicator(
+                        color: AppTheme.primaryAction)),
+                error: (err, _) => Center(
+                    child: Text('Erro: $err',
+                        style: const TextStyle(
+                            color: AppTheme.textSecondary))),
+                data: (receipt) => _ReceiptDetailContent(
+                  receipt: receipt,
+                  receiptId: idAtIndex,
+                ),
+              );
+            },
+          ),
+
+          // ── Chevron hints (purely decorative) ──
+          if (hasPrev)
+            const Positioned(
+              left: 4,
+              top: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                child: Center(
+                  child: Icon(Icons.chevron_left_rounded,
+                      size: 28, color: Colors.white24),
+                ),
+              ),
+            ),
+          if (hasNext)
+            const Positioned(
+              right: 4,
+              top: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                child: Center(
+                  child: Icon(Icons.chevron_right_rounded,
+                      size: 28, color: Colors.white24),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
+
+  // ── Share ─────────────────────────────────────────────────────────────────
 
   void _showShareSheet(BuildContext context, WidgetRef ref, Receipt receipt) {
     showModalBottomSheet<void>(
@@ -91,8 +184,8 @@ class ReceiptDetailScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             ListTile(
-              leading:
-                  const Icon(Icons.message_rounded, color: AppTheme.primaryAction),
+              leading: const Icon(Icons.message_rounded,
+                  color: AppTheme.primaryAction),
               title: const Text('Compartilhar como texto'),
               onTap: () {
                 Navigator.pop(ctx);
@@ -129,7 +222,6 @@ class ReceiptDetailScreen extends ConsumerWidget {
   void _shareText(Receipt receipt) {
     final currFmt = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
     final dateFmt = DateFormat('dd/MM/yyyy HH:mm', 'pt_BR');
-
     final buf = StringBuffer();
     buf.writeln('🧾 *${receipt.storeName}*');
     if (receipt.merchantId != null && receipt.merchantId!.isNotEmpty) {
@@ -146,9 +238,9 @@ class ReceiptDetailScreen extends ConsumerWidget {
     }
     buf.writeln('');
     buf.writeln('*Total: ${currFmt.format(receipt.totalAmount)}*');
-    final hasBreakdown = receipt.taxState != null && receipt.taxFederal != null && 
-                        (receipt.taxState! > 0 || receipt.taxFederal! > 0);
-    
+    final hasBreakdown = receipt.taxState != null &&
+        receipt.taxFederal != null &&
+        (receipt.taxState! > 0 || receipt.taxFederal! > 0);
     if (hasBreakdown) {
       buf.writeln(
           'Impostos: Estadual ${currFmt.format(receipt.taxState ?? 0)} | Federal ${currFmt.format(receipt.taxFederal ?? 0)}');
@@ -157,7 +249,6 @@ class ReceiptDetailScreen extends ConsumerWidget {
     }
     buf.writeln('');
     buf.writeln('Enviado via Notinha 🧾');
-
     Share.share(buf.toString(), subject: 'Nota ${receipt.storeName}');
   }
 
@@ -176,8 +267,7 @@ class ReceiptDetailScreen extends ConsumerWidget {
             ? 'application/pdf'
             : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       );
-      await Share.shareXFiles([xfile],
-          subject: 'Recibo ${receipt.storeName}');
+      await Share.shareXFiles([xfile], subject: 'Recibo ${receipt.storeName}');
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
@@ -300,7 +390,9 @@ class _ReceiptDetailContent extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 18),
                   ),
-                  if (receipt.taxState != null && receipt.taxFederal != null && 
+                  // ── Fix: impostos com wrap para não cortar ──
+                  if (receipt.taxState != null &&
+                      receipt.taxFederal != null &&
                       (receipt.taxState! > 0 || receipt.taxFederal! > 0)) ...[
                     const SizedBox(height: 8),
                     _InfoRow(
@@ -308,8 +400,10 @@ class _ReceiptDetailContent extends StatelessWidget {
                       value:
                           'Estadual ${currencyFmt.format(receipt.taxState ?? 0)} | Federal ${currencyFmt.format(receipt.taxFederal ?? 0)}',
                       icon: Icons.receipt_rounded,
+                      wrap: true, // quebra linha em vez de ellipsis
                     ),
-                  ] else if (receipt.taxes != null && receipt.taxes! > 0) ...[
+                  ] else if (receipt.taxes != null &&
+                      receipt.taxes! > 0) ...[
                     const SizedBox(height: 8),
                     _InfoRow(
                       label: 'Impostos',
@@ -375,6 +469,8 @@ class _ReceiptDetailContent extends StatelessWidget {
   }
 }
 
+// ── _InfoRow ──────────────────────────────────────────────────────────────────
+
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
@@ -399,13 +495,15 @@ class _InfoRow extends StatelessWidget {
         Icon(icon, color: AppTheme.textSecondary, size: 16),
         const SizedBox(width: 8),
         Text('$label: ',
-            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            style:
+                const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
         Flexible(
           child: Text(
             value,
             style: valueStyle ?? const TextStyle(fontSize: 13),
             softWrap: wrap,
-            overflow: wrap ? TextOverflow.visible : TextOverflow.ellipsis,
+            overflow:
+                wrap ? TextOverflow.visible : TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -414,6 +512,7 @@ class _InfoRow extends StatelessWidget {
 }
 
 // ── Categorias disponíveis para seleção manual ────────────────────────────────
+
 const _kCategories = [
   'Alimentos/Frios',
   'Alimentos/Carnes',
@@ -429,6 +528,8 @@ const _kCategories = [
   'Lazer',
   'Outros',
 ];
+
+// ── _ItemTile ─────────────────────────────────────────────────────────────────
 
 class _ItemTile extends ConsumerWidget {
   final ReceiptItem item;

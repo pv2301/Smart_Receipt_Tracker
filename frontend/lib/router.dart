@@ -50,7 +50,9 @@ final goRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final id = int.parse(state.pathParameters['id']!);
-        return ReceiptDetailScreen(receiptId: id);
+        final extra = state.extra;
+        final allIds = extra is List<int> ? extra : null;
+        return ReceiptDetailScreen(receiptId: id, allIds: allIds);
       },
     ),
   ],

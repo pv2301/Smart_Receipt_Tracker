@@ -322,7 +322,10 @@ class _HistoryList extends StatelessWidget {
 
     final currencyFmt =
         NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
-    final dateFmt = DateFormat('dd/MM/yyyy • HH:mm', 'pt_BR');
+    final dateFmt = DateFormat('dd/MM/yyyy \u2022 HH:mm', 'pt_BR');
+
+    // IDs de todos os recibos exibidos — passados ao detalhe para swipe
+    final allIds = receipts.map((r) => r.id).toList();
 
     // Group by month
     final grouped = <String, List<Receipt>>{};
@@ -369,6 +372,7 @@ class _HistoryList extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: AppTheme.spaceSM),
                   child: _SwipeToDeleteCard(
                     receipt: r,
+                    allIds: allIds,
                     currencyFmt: currencyFmt,
                     dateFmt: dateFmt,
                     onDelete: onDelete,
@@ -386,12 +390,14 @@ class _HistoryList extends StatelessWidget {
 
 class _SwipeToDeleteCard extends StatelessWidget {
   final Receipt receipt;
+  final List<int> allIds;
   final NumberFormat currencyFmt;
   final DateFormat dateFmt;
   final Future<void> Function(int) onDelete;
 
   const _SwipeToDeleteCard({
     required this.receipt,
+    required this.allIds,
     required this.currencyFmt,
     required this.dateFmt,
     required this.onDelete,
@@ -446,6 +452,7 @@ class _SwipeToDeleteCard extends StatelessWidget {
       onDismissed: (_) => onDelete(receipt.id),
       child: _ReceiptCard(
         receipt: receipt,
+        allIds: allIds,
         currencyFmt: currencyFmt,
         dateFmt: dateFmt,
       ),
@@ -457,11 +464,13 @@ class _SwipeToDeleteCard extends StatelessWidget {
 
 class _ReceiptCard extends StatelessWidget {
   final Receipt receipt;
+  final List<int> allIds;
   final NumberFormat currencyFmt;
   final DateFormat dateFmt;
 
   const _ReceiptCard({
     required this.receipt,
+    required this.allIds,
     required this.currencyFmt,
     required this.dateFmt,
   });
@@ -472,7 +481,7 @@ class _ReceiptCard extends StatelessWidget {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-        onTap: () => context.push('/receipt/${receipt.id}'),
+        onTap: () => context.push('/receipt/${receipt.id}', extra: allIds),
         child: Padding(
           padding: const EdgeInsets.all(AppTheme.spaceMD),
           child: Row(
