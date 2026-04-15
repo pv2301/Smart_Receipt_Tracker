@@ -146,7 +146,10 @@ class ReceiptDetailScreen extends ConsumerWidget {
     }
     buf.writeln('');
     buf.writeln('*Total: ${currFmt.format(receipt.totalAmount)}*');
-    if (receipt.taxState != null || receipt.taxFederal != null) {
+    final hasBreakdown = receipt.taxState != null && receipt.taxFederal != null && 
+                        (receipt.taxState! > 0 || receipt.taxFederal! > 0);
+    
+    if (hasBreakdown) {
       buf.writeln(
           'Impostos: Estadual ${currFmt.format(receipt.taxState ?? 0)} | Federal ${currFmt.format(receipt.taxFederal ?? 0)}');
     } else if (receipt.taxes != null && receipt.taxes! > 0) {
@@ -297,7 +300,8 @@ class _ReceiptDetailContent extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         fontSize: 18),
                   ),
-                  if (receipt.taxState != null || receipt.taxFederal != null) ...[
+                  if (receipt.taxState != null && receipt.taxFederal != null && 
+                      (receipt.taxState! > 0 || receipt.taxFederal! > 0)) ...[
                     const SizedBox(height: 8),
                     _InfoRow(
                       label: 'Impostos',

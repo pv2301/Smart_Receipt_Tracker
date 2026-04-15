@@ -145,6 +145,18 @@ def get_receipts(db: Session, skip: int = 0, limit: int = 100):
     user = get_user(db)
     return db.query(models.Receipt).filter(models.Receipt.owner_id == user.id).offset(skip).limit(limit).all()
 
+
+def count_receipts(db: Session, user_id: int = 1) -> int:
+    """Conta o total de notas fiscais do usuário (para o warm-up banner)."""
+    return db.query(func.count(models.Receipt.id)).filter(
+        models.Receipt.owner_id == user_id
+    ).scalar() or 0
+
+
+def get_all_receipt_items(db: Session):
+    """Retorna todos os ReceiptItem do banco (para recategorização em lote)."""
+    return db.query(models.ReceiptItem).all()
+
 def create_receipt(db: Session, receipt: schemas.ReceiptCreate):
     user = get_user(db)
     db_receipt = models.Receipt(

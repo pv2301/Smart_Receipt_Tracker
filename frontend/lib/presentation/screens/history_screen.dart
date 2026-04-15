@@ -1,11 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
+import '../../core/constants.dart';
+import '../../core/services/export_service.dart';
 import '../providers/receipt_providers.dart';
 import '../../data/receipt_repository.dart';
 import '../../domain/entities/receipt.dart';
@@ -19,6 +18,7 @@ class HistoryScreen extends ConsumerStatefulWidget {
 
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   String _searchQuery = '';
+  String? _selectedCategory;
   final _searchController = SearchController();
 
   @override
@@ -27,25 +27,22 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     super.dispose();
   }
 
-  Future<void> _exportData(String format) async {
+  Future<void> _exportData(String format, List<Receipt> receipts) async {
     try {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Gerando relatório...'),
-            duration: Duration(seconds: 2)),
+            duration: Duration(seconds: 1)),
       );
       final now = DateTime.now();
-      final repo = ref.read(receiptRepositoryProvider);
-      final bytes = await repo.exportReceipts(
-          format: format, month: now.month, year: now.year);
-      final tempDir = await getTemporaryDirectory();
-      final fileName = format == 'pdf'
-          ? 'relatorio_gastos_${now.month}_${now.year}.pdf'
-          : 'gastos_notinha_${now.month}_${now.year}.xlsx';
-      final file = File('${tempDir.path}/$fileName');
-      await file.writeAsBytes(bytes);
-      await Share.shareXFiles([XFile(file.path)],
-          text: 'Meu relatório de gastos - Notinha');
+      if (format == 'pdf') {
+        await ExportService.exportMonthlyPdf(
+            context, receipts, now.month, now.year);
+      } else {
+        await ExportService.exportMonthlyExcel(
+            context, receipts, now.month, now.year);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -57,13 +54,13 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     }
   }
 
-  void _showExportOptions() {
+  void _showExportOptions(List<Receipt> receipts) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.cardColor,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => SafeArea(
+      builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
           child: Column(
@@ -80,19 +77,23 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
               ListTile(
                 leading: const Icon(Icons.picture_as_pdf_rounded,
                     color: Colors.redAccent),
-                title: const Text('Relatório PDF (com Gráficos)'),
+                title: const Text('Relatório PDF'),
+                subtitle: const Text('Resumo + lista detalhada',
+                    style: TextStyle(fontSize: 12)),
                 onTap: () {
-                  Navigator.pop(context);
-                  _exportData('pdf');
+                  Navigator.pop(ctx);
+                  _exportData('pdf', receipts);
                 },
               ),
               ListTile(
                 leading: const Icon(Icons.table_chart_rounded,
                     color: Colors.greenAccent),
-                title: const Text('Planilha Excel (Contabilidade)'),
+                title: const Text('Planilha Excel'),
+                subtitle: const Text('3 abas: Resumo, Itens, Por Categoria',
+                    style: TextStyle(fontSize: 12)),
                 onTap: () {
-                  Navigator.pop(context);
-                  _exportData('excel');
+                  Navigator.pop(ctx);
+                  _exportData('excel', receipts);
                 },
               ),
               const SizedBox(height: 12),
@@ -114,10 +115,17 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Exportar Relatórios',
-            onPressed: _showExportOptions,
+          // Export button — reads receipts from provider state
+          Consumer(
+            builder: (_, ref, __) {
+              final receipts =
+                  ref.watch(receiptsProvider).asData?.value ?? const [];
+              return IconButton(
+                icon: const Icon(Icons.file_download_outlined),
+                tooltip: 'Exportar Relatórios',
+                onPressed: () => _showExportOptions(receipts),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
@@ -154,6 +162,69 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
             ),
           ),
 
+          // ── Category filter chips ──
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              children: [
+                // "Todos" chip
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    label: const Text('Todos'),
+                    selected: _selectedCategory == null,
+                    onSelected: (_) =>
+                        setState(() => _selectedCategory = null),
+                    selectedColor:
+                        AppTheme.primaryAction.withOpacity(0.2),
+                    checkmarkColor: AppTheme.primaryAction,
+                    labelStyle: TextStyle(
+                      color: _selectedCategory == null
+                          ? AppTheme.primaryAction
+                          : AppTheme.textSecondary,
+                      fontSize: AppTheme.fontSM,
+                    ),
+                    side: BorderSide(
+                      color: _selectedCategory == null
+                          ? AppTheme.primaryAction
+                          : Colors.white12,
+                    ),
+                    backgroundColor: AppTheme.cardColor,
+                  ),
+                ),
+                // Category chips
+                ...AppCategories.labels.map((label) {
+                  final info = AppCategories.get(label);
+                  final isSelected = _selectedCategory == label;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      avatar: Text(info.emoji,
+                          style: const TextStyle(fontSize: 14)),
+                      label: Text(info.label),
+                      selected: isSelected,
+                      onSelected: (_) => setState(() =>
+                          _selectedCategory = isSelected ? null : label),
+                      selectedColor: info.color.withOpacity(0.2),
+                      checkmarkColor: info.color,
+                      labelStyle: TextStyle(
+                        color: isSelected ? info.color : AppTheme.textSecondary,
+                        fontSize: AppTheme.fontSM,
+                      ),
+                      side: BorderSide(
+                        color: isSelected ? info.color : Colors.white12,
+                      ),
+                      backgroundColor: AppTheme.cardColor,
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
           // ── List ──
           Expanded(
             child: RefreshIndicator(
@@ -185,13 +256,24 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   ),
                 ),
                 data: (receipts) {
-                  final filtered = _searchQuery.isEmpty
+                  // Filter by search query
+                  var filtered = _searchQuery.isEmpty
                       ? receipts
                       : receipts
                           .where((r) => r.storeName
                               .toLowerCase()
                               .contains(_searchQuery.toLowerCase()))
                           .toList();
+
+                  // Filter by selected category
+                  if (_selectedCategory != null) {
+                    filtered = filtered
+                        .where((r) => r.items.any(
+                              (item) => item.category == _selectedCategory,
+                            ))
+                        .toList();
+                  }
+
                   return _HistoryList(
                     receipts: filtered,
                     onDelete: (id) async {

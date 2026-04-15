@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
+import '../../core/services/export_service.dart';
 import '../../core/services/notification_service.dart';
 import '../../data/receipt_repository.dart';
 import '../providers/settings_provider.dart';
@@ -345,32 +346,120 @@ class _DataSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return _SettingsCard(children: [
       ListTile(
+        leading: const Icon(Icons.file_download_outlined,
+            color: AppTheme.primaryAction),
         title: const Text('Exportar histórico completo'),
-        trailing: const Icon(Icons.file_download_outlined, color: AppTheme.textSecondary),
-        onTap: () async {
-          try {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Gerando planilha…'), duration: Duration(seconds: 2)),
-            );
-            final repo = ref.read(receiptRepositoryProvider);
-            final now = DateTime.now();
-            await repo.exportReceipts(format: 'excel', month: now.month, year: now.year);
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Erro: $e'), backgroundColor: Colors.redAccent),
-              );
-            }
-          }
-        },
+        subtitle: const Text('Gera PDF ou Excel do mês atual',
+            style: TextStyle(
+                fontSize: AppTheme.fontSM, color: AppTheme.textSecondary)),
+        trailing: const Icon(Icons.chevron_right_rounded,
+            color: AppTheme.textSecondary),
+        onTap: () => _showExportSheet(context, ref),
       ),
       ListTile(
         title: const Text('Limpar todo o histórico',
             style: TextStyle(color: Colors.redAccent)),
-        trailing: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+        trailing: const Icon(Icons.delete_outline_rounded,
+            color: Colors.redAccent),
         onTap: () => _confirmClear(context, ref),
       ),
     ]);
+  }
+
+  void _showExportSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.cardColor,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        final receipts =
+            ref.read(receiptsProvider).asData?.value ?? const [];
+        final now = DateTime.now();
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Exportar Histórico',
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(
+                  'Mês atual: ${_monthLabel(now)}',
+                  style: const TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(Icons.picture_as_pdf_rounded,
+                      color: Colors.redAccent),
+                  title: const Text('Relatório PDF'),
+                  subtitle: const Text('Resumo + notas detalhadas',
+                      style: TextStyle(fontSize: 12)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _export(context, 'pdf', receipts, now);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.table_chart_rounded,
+                      color: Colors.greenAccent),
+                  title: const Text('Planilha Excel'),
+                  subtitle: const Text('3 abas: Resumo, Itens, Por Categoria',
+                      style: TextStyle(fontSize: 12)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _export(context, 'excel', receipts, now);
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _export(
+    BuildContext context,
+    String format,
+    List receipts,
+    DateTime now,
+  ) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Gerando relatório…'),
+            duration: Duration(seconds: 1)),
+      );
+      if (format == 'pdf') {
+        await ExportService.exportMonthlyPdf(
+            context, List.from(receipts), now.month, now.year);
+      } else {
+        await ExportService.exportMonthlyExcel(
+            context, List.from(receipts), now.month, now.year);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Erro ao exportar: $e'),
+              backgroundColor: Colors.redAccent),
+        );
+      }
+    }
+  }
+
+  String _monthLabel(DateTime dt) {
+    const months = [
+      'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez',
+    ];
+    return '${months[dt.month - 1]} ${dt.year}';
   }
 
   Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {

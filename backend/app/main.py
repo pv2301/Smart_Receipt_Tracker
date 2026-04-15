@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -184,3 +184,48 @@ def scan_receipt(qr_url: str, db: Session = Depends(get_db)):
 
     # Save to database
     return crud.create_receipt(db=db, receipt=receipt_in)
+
+
+@app.get("/categories")
+def list_categories():
+    """Retorna todas as categorias disponíveis com seus labels."""
+    from .categorizer import get_all_categories
+    return get_all_categories()
+
+
+@app.post("/receipts/recategorize-all", status_code=202)
+def recategorize_all_receipts(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """
+    Reprocessa a categoria de todos os itens existentes no banco.
+    Executa em background — retorna 202 Accepted imediatamente.
+    """
+    def _do_recategorize(db: Session):
+        from .categorizer import categorize_item
+        items = crud.get_all_receipt_items(db)
+        for item in items:
+            new_cat = categorize_item(item.product_name)
+            if item.category != new_cat:
+                item.category = new_cat
+        db.commit()
+
+    background_tasks.add_task(_do_recategorize, db)
+    return {"status": "accepted", "message": "Recategorização iniciada em background"}
+
+
+@app.get("/suggestions/count")
+def get_suggestions_count(db: Session = Depends(get_db)):
+    """
+    Retorna o número de notas do usuário e os thresholds para o warm-up banner.
+    Usado pela Lista Inteligente para mostrar o progresso de onboarding.
+    """
+    receipt_count = crud.count_receipts(db)
+    return {
+        "receipt_count": receipt_count,
+        "threshold_basic": 3,   # sugestões simples ativam com 3 notas
+        "threshold_full": 5,    # lista inteligente completa com 5 notas
+        "has_basic": receipt_count >= 3,
+        "has_full": receipt_count >= 5,
+    }

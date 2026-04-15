@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../widgets/suggestion_card.dart';
+import '../widgets/smart_list_warmup_banner.dart';
 import '../../core/services/notification_service.dart';
 
 class ShoppingListScreen extends ConsumerStatefulWidget {
@@ -73,6 +74,9 @@ class _ShoppingListScreenState extends ConsumerState<ShoppingListScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Warm-up banner (auto-hides at 5+ receipts) ──
+          const SmartListWarmupBanner(),
+
           // ── Category filter chips ──
           SizedBox(
             height: 44,

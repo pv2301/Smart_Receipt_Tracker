@@ -30,6 +30,15 @@ final suggestionsProvider =
 });
 
 // ---------------------------------------------------------------------------
+// suggestionCountProvider – receipt count for SmartListWarmupBanner
+// ---------------------------------------------------------------------------
+final suggestionCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  final repo = ref.watch(receiptRepositoryProvider);
+  return repo.getReceiptCount();
+});
+
+
+// ---------------------------------------------------------------------------
 // receiptByIdProvider – single receipt details
 // ---------------------------------------------------------------------------
 final receiptByIdProvider =

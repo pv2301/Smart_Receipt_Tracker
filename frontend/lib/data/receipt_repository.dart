@@ -33,6 +33,9 @@ abstract class ReceiptRepository {
 
   // Item patch
   Future<void> patchReceiptItemCategory(int itemId, String category);
+
+  // Warm-up count
+  Future<int> getReceiptCount();
 }
 
 /// Concrete implementation backed by the FastAPI backend.
@@ -167,6 +170,13 @@ class ApiReceiptRepository implements ReceiptRepository {
       '/receipt-items/$itemId',
       data: {'category': category},
     );
+  }
+
+  @override
+  Future<int> getReceiptCount() async {
+    final response = await _dio.get('/suggestions/count');
+    final data = response.data as Map<String, dynamic>;
+    return (data['receipt_count'] as int?) ?? 0;
   }
 }
 
