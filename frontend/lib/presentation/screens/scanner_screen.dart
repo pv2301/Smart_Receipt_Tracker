@@ -4,11 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import '../../core/theme.dart';
 import '../providers/receipt_providers.dart';
 import '../providers/settings_provider.dart';
-import '../../data/receipt_repository.dart';
 
 // ── SEFAZ state detection (mirrors backend sefaz_registry.py) ────────────────
 
@@ -210,7 +208,7 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('OCR disponível apenas no app móvel'),
+          content: Text('Importar imagem disponível apenas no app móvel'),
           duration: Duration(seconds: 3),
         ),
       );
@@ -229,27 +227,23 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen> {
     ref.read(scanReceiptProvider.notifier).startLoading();
 
     try {
-      // Run MLKit text recognition on device
-      final inputImage = InputImage.fromFilePath(photo.path);
-      final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
-      final RecognizedText recognized = await recognizer.processImage(inputImage);
-      recognizer.close();
+      // Decode QR code from the selected image using MobileScanner
+      final BarcodeCapture? capture = await _controller.analyzeImage(photo.path);
 
-      final extractedText = recognized.text;
-      if (extractedText.trim().isEmpty) {
-        throw Exception('Nenhum texto encontrado na imagem');
+      if (capture == null || capture.barcodes.isEmpty) {
+        throw Exception('Nenhum QR Code encontrado na imagem');
       }
 
-      // Send extracted text to backend for parsing
-      final repo = ref.read(receiptRepositoryProvider);
-      final receipt = await repo.scanReceiptOcr(extractedText);
-
-      ref.read(scanReceiptProvider.notifier).setSuccess(receipt);
-      ref.invalidate(receiptsProvider);
-
-      if (mounted) {
-        context.pushReplacement('/receipt/${receipt.id}');
+      final rawValue = capture.barcodes.first.rawValue;
+      if (rawValue == null || rawValue.isEmpty) {
+        throw Exception('QR Code ilegível — tente uma foto mais nítida');
       }
+
+      // Reset loading state so _processScan can manage its own state
+      ref.read(scanReceiptProvider.notifier).reset();
+
+      // Process the QR URL exactly as if it was scanned live
+      await _processScan(rawValue);
     } catch (e) {
       ref.read(scanReceiptProvider.notifier).setError(e.toString());
       if (mounted) {

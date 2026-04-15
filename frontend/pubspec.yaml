@@ -53,7 +53,6 @@ dependencies:
   geolocator: ^13.0.0
   geocoding: ^3.0.0
   image_picker: ^1.1.2
-  google_mlkit_text_recognition: ^0.13.0
   pdf: ^3.11.3
   printing: ^5.11.1
   excel: ^4.0.3
